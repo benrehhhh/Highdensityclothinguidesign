@@ -92,19 +92,19 @@ export function Homepage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link to="/home/catalog">
-                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E]">
+                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E] text-[#676767]">
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     Shop Now
                   </Button>
                 </Link>
                 <Link to="/home/track-order">
-                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E]">
+                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E] text-[#676767]">
                     <Truck className="w-4 h-4 mr-2" />
                     Track Orders
                   </Button>
                 </Link>
                 <Link to="/home/account">
-                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E]">
+                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E] text-[#676767]">
                     <Package className="w-4 h-4 mr-2" />
                     My Orders
                   </Button>
@@ -144,7 +144,7 @@ export function Homepage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#3B2C24]">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#3B2C24] text-[#676767]">
                 Learn More
               </Button>
             </div>
@@ -325,7 +325,7 @@ export function Homepage() {
             Browse our collection and find your perfect piece today.
           </p>
           <Link to="/home/catalog">
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E]">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E] text-[#676767]">
               <ShoppingBag className="w-5 h-5 mr-2" />
               Start Shopping
               <ArrowRight className="w-5 h-5 ml-2" />

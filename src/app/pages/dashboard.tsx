@@ -48,22 +48,22 @@ export function Dashboard() {
   });
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 bg-white min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-[#3B2C24]">Dashboard</h1>
-          <p className="text-[#8B7355] flex items-center gap-2 mt-1">
+          <h1 className="text-3xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 flex items-center gap-2 mt-1">
             <Calendar className="w-4 h-4" />
             {today}
           </p>
         </div>
         <div className="flex gap-3">
-          <Button className="bg-[#B7885E] hover:bg-[#9d7350] text-white">
+          <Button className="bg-gray-900 hover:bg-gray-800 text-white">
             <Package className="w-4 h-4 mr-2" />
             Add Product
           </Button>
-          <Button variant="outline" className="border-[#B7885E]/20 text-[#3B2C24]">
+          <Button variant="outline" className="border-gray-300 text-gray-900 hover:bg-gray-50">
             <ShoppingCart className="w-4 h-4 mr-2" />
             View Orders
           </Button>
@@ -72,62 +72,62 @@ export function Dashboard() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-[#3B2C24]">
+            <CardTitle className="text-sm font-medium text-gray-900">
               Total Orders Today
             </CardTitle>
-            <ShoppingCart className="w-5 h-5 text-[#B7885E]" />
+            <ShoppingCart className="w-5 h-5 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-[#3B2C24]">24</div>
-            <p className="text-xs text-[#8B7355] flex items-center gap-1 mt-2">
+            <div className="text-3xl font-semibold text-gray-900">24</div>
+            <p className="text-xs text-gray-600 flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-600" />
               <span className="text-green-600">+12%</span> from yesterday
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-[#3B2C24]">
+            <CardTitle className="text-sm font-medium text-gray-900">
               Pending Deliveries
             </CardTitle>
-            <Package className="w-5 h-5 text-[#DDB67D]" />
+            <Package className="w-5 h-5 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-[#3B2C24]">8</div>
-            <p className="text-xs text-[#8B7355] mt-2">
+            <div className="text-3xl font-semibold text-gray-900">8</div>
+            <p className="text-xs text-gray-600 mt-2">
               3 dispatched today
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-[#3B2C24]">
+            <CardTitle className="text-sm font-medium text-gray-900">
               Low Stock Alerts
             </CardTitle>
             <AlertCircle className="w-5 h-5 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-[#3B2C24]">5</div>
+            <div className="text-3xl font-semibold text-gray-900">5</div>
             <p className="text-xs text-red-600 mt-2">
               Needs restocking
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-[#3B2C24]">
+            <CardTitle className="text-sm font-medium text-gray-900">
               Monthly Sales
             </CardTitle>
             <DollarSign className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-[#3B2C24]">₱67,000</div>
-            <p className="text-xs text-[#8B7355] flex items-center gap-1 mt-2">
+            <div className="text-3xl font-semibold text-gray-900">₱67,000</div>
+            <p className="text-xs text-gray-600 flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-600" />
               <span className="text-green-600">+22%</span> from last month
             </p>
@@ -138,13 +138,13 @@ export function Dashboard() {
       {/* Charts Section */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Sales Trend Chart */}
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg">
+        <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#3B2C24]">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
               <TrendingUp className="w-5 h-5 text-[#B7885E]" />
               Sales Trend
             </CardTitle>
-            <CardDescription className="text-[#8B7355]">
+            <CardDescription className="text-gray-600">
               Monthly sales performance for the year
             </CardDescription>
           </CardHeader>
@@ -188,13 +188,13 @@ export function Dashboard() {
         </Card>
 
         {/* Orders Chart */}
-        <Card className="border-[#B7885E]/20 bg-white shadow-lg">
+        <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#3B2C24]">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
               <ShoppingCart className="w-5 h-5 text-[#B7885E]" />
               Order Volume
             </CardTitle>
-            <CardDescription className="text-[#8B7355]">
+            <CardDescription className="text-gray-600">
               Number of orders per month
             </CardDescription>
           </CardHeader>
@@ -236,13 +236,13 @@ export function Dashboard() {
       </div>
 
       {/* Recent Orders */}
-      <Card className="border-[#B7885E]/20 bg-white shadow-lg">
+      <Card className="border-gray-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#3B2C24]">
+          <CardTitle className="flex items-center gap-2 text-gray-900">
             <ShoppingCart className="w-5 h-5 text-[#B7885E]" />
             Recent Orders
           </CardTitle>
-          <CardDescription className="text-[#8B7355]">
+          <CardDescription className="text-gray-600">
             Latest customer orders
           </CardDescription>
         </CardHeader>
@@ -250,20 +250,20 @@ export function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#B7885E]/20">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[#3B2C24]">Order ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[#3B2C24]">Customer</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[#3B2C24]">Product</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[#3B2C24]">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[#3B2C24]">Status</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Order ID</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Customer</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Product</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Amount</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="border-b border-[#B7885E]/10 hover:bg-[#FFF5E6]/50">
-                    <td className="py-3 px-4 text-sm text-[#3B2C24]">{order.id}</td>
-                    <td className="py-3 px-4 text-sm text-[#3B2C24]">{order.customer}</td>
-                    <td className="py-3 px-4 text-sm text-[#8B7355]">{order.product}</td>
+                    <td className="py-3 px-4 text-sm text-gray-900">{order.id}</td>
+                    <td className="py-3 px-4 text-sm text-gray-900">{order.customer}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{order.product}</td>
                     <td className="py-3 px-4 text-sm font-medium text-[#B7885E]">₱{order.amount.toLocaleString()}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -284,7 +284,7 @@ export function Dashboard() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Card className="border-[#B7885E]/20 bg-gradient-to-br from-[#B7885E] to-[#9d7350] text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+        <Card className="border-gray-200 bg-gradient-to-br from-[#B7885E] to-[#9d7350] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
           <CardContent className="pt-6">
             <Package className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">Add Product</h3>
@@ -292,7 +292,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#B7885E]/20 bg-gradient-to-br from-[#DDB67D] to-[#B7885E] text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+        <Card className="border-gray-200 bg-gradient-to-br from-[#DDB67D] to-[#B7885E] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
           <CardContent className="pt-6">
             <ShoppingCart className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">View Orders</h3>
@@ -300,7 +300,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#B7885E]/20 bg-gradient-to-br from-[#3B2C24] to-[#4a3a30] text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+        <Card className="border-gray-200 bg-gradient-to-br from-[#3B2C24] to-[#4a3a30] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
           <CardContent className="pt-6">
             <Users className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">Process Delivery</h3>

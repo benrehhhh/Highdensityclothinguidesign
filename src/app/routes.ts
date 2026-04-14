@@ -4,6 +4,8 @@ import { Dashboard } from "./pages/dashboard";
 import { Inventory } from "./pages/inventory";
 import { Customers } from "./pages/customers";
 import { Delivery } from "./pages/delivery";
+import { Products } from "./pages/products";
+import { Discounts } from "./pages/discounts";
 import { AdminLayout } from "./components/admin-layout";
 import { CustomerLayout } from "./components/customer-layout";
 import { Homepage } from "./pages/customer/homepage";
@@ -70,9 +72,12 @@ export const router = createBrowserRouter([
     Component: AdminLayout,
     children: [
       { index: true, Component: Dashboard },
+      { path: "products", Component: Products },
       { path: "inventory", Component: Inventory },
+      { path: "discounts", Component: Discounts },
       { path: "customers", Component: Customers },
       { path: "delivery", Component: Delivery },
+      { path: "reports", Component: Dashboard },
     ],
   },
 ]);
