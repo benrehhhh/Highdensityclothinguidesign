@@ -70,7 +70,7 @@ export function Landing() {
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#3B2C24]">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#3B2C24] text-[#676767]">
                   <UserPlus className="w-5 h-5 mr-2" />
                   Create Account
                 </Button>
@@ -203,7 +203,7 @@ export function Landing() {
             Are you an administrator? Access the admin portal to manage inventory, orders, and customers.
           </p>
           <Link to="/login">
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E]">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#B7885E] text-[#676767]">
               <Shield className="w-5 h-5 mr-2" />
               Admin Login
             </Button>
