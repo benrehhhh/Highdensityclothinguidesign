@@ -1,0 +1,94 @@
+High Density Clothing - File Structure
+=====================================
+
+Project Root
+│
+├── 📄 Documentation
+│   ├── README.md                    - Quick start guide
+│   ├── PROJECT_STRUCTURE.md         - Detailed project documentation
+│   ├── CLEANUP_SUMMARY.md           - Recent cleanup report
+│   └── FILE_STRUCTURE.txt          - This file
+│
+├── ⚙️ Configuration
+│   ├── package.json                 - Dependencies
+│   ├── vite.config.ts              - Vite configuration
+│   ├── postcss.config.mjs          - PostCSS configuration
+│   ├── pnpm-lock.yaml              - Lock file
+│   └── pnpm-workspace.yaml         - Workspace configuration
+│
+└── 📁 src/app/
+    │
+    ├── 🎨 Components
+    │   ├── ui/                      - Reusable UI components (14 active)
+    │   │   ├── alert.tsx
+    │   │   ├── avatar.tsx
+    │   │   ├── badge.tsx
+    │   │   ├── button.tsx
+    │   │   ├── card.tsx
+    │   │   ├── dialog.tsx
+    │   │   ├── dropdown-menu.tsx
+    │   │   ├── input.tsx
+    │   │   ├── label.tsx
+    │   │   ├── radio-group.tsx
+    │   │   ├── select.tsx
+    │   │   ├── separator.tsx
+    │   │   ├── tabs.tsx
+    │   │   ├── textarea.tsx
+    │   │   ├── use-mobile.ts
+    │   │   └── utils.ts
+    │   │
+    │   ├── figma/
+    │   │   └── ImageWithFallback.tsx
+    │   │
+    │   ├── admin-layout.tsx         - Admin panel layout with sidebar
+    │   ├── customer-layout.tsx      - Customer interface layout
+    │   └── map-wrapper.tsx          - Leaflet GPS map component
+    │
+    ├── 📄 Pages
+    │   │
+    │   ├── auth/
+    │   │   └── register.tsx         - User registration
+    │   │
+    │   ├── customer/                - Customer-facing pages (11 pages)
+    │   │   ├── homepage.tsx         - Customer homepage
+    │   │   ├── catalog.tsx          - Product catalog
+    │   │   ├── product-details.tsx  - Individual product page
+    │   │   ├── cart.tsx             - Shopping cart
+    │   │   ├── checkout.tsx         - Checkout process
+    │   │   ├── user-dashboard.tsx   - User account settings
+    │   │   ├── order-tracking.tsx   - GPS order tracking
+    │   │   ├── wishlist.tsx         - Saved products
+    │   │   ├── reviews.tsx          - Product reviews
+    │   │   ├── notifications.tsx    - User notifications
+    │   │   ├── about.tsx            - About page
+    │   │   └── contact.tsx          - Contact form
+    │   │
+    │   ├── Admin Pages (8 pages)
+    │   ├── dashboard.tsx            - Admin dashboard & analytics
+    │   ├── products.tsx             - Product CRUD & management
+    │   ├── inventory.tsx            - Inventory management
+    │   ├── discounts.tsx            - Discounts & promotions
+    │   ├── customers.tsx            - Customer management
+    │   ├── delivery.tsx             - GPS delivery tracking
+    │   ├── admin-settings.tsx       - Admin account settings ⭐ NEW
+    │   │
+    │   ├── Public Pages
+    │   ├── landing.tsx              - Landing page
+    │   └── unified-login.tsx        - Login for admin/customer
+    │
+    ├── App.tsx                      - Main application component
+    └── routes.ts                    - Central routing configuration
+
+Styles
+src/styles/
+├── fonts.css                        - Font imports
+├── index.css                        - Global styles
+├── tailwind.css                     - Tailwind directives
+└── theme.css                        - Theme tokens
+
+Total Files by Category:
+- Page Files: 22
+- UI Components: 14
+- Layout Components: 3
+- Utility Files: 2
+- Total Component Files: 18

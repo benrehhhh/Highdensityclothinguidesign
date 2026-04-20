@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -59,14 +60,8 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button className="bg-gray-900 hover:bg-gray-800 text-white">
-            <Package className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
-          <Button variant="outline" className="border-gray-300 text-gray-900 hover:bg-gray-50">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            View Orders
-          </Button>
+          
+          
         </div>
       </div>
 

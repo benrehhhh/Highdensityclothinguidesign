@@ -1,0 +1,45 @@
+.
+|-- guidelines
+|   `-- Guidelines.md
+|-- plans
+|-- src
+|   |-- app
+|   |   |-- components
+|   |   |   |-- figma
+|   |   |   |-- ui
+|   |   |   |-- admin-layout.tsx
+|   |   |   |-- customer-layout.tsx
+|   |   |   `-- map-wrapper.tsx
+|   |   |-- pages
+|   |   |   |-- auth
+|   |   |   |-- customer
+|   |   |   |-- admin-settings.tsx
+|   |   |   |-- customers.tsx
+|   |   |   |-- dashboard.tsx
+|   |   |   |-- delivery.tsx
+|   |   |   |-- discounts.tsx
+|   |   |   |-- inventory.tsx
+|   |   |   |-- landing.tsx
+|   |   |   |-- products.tsx
+|   |   |   `-- unified-login.tsx
+|   |   |-- App.tsx
+|   |   `-- routes.ts
+|   `-- styles
+|       |-- fonts.css
+|       |-- index.css
+|       |-- tailwind.css
+|       `-- theme.css
+|-- ATTRIBUTIONS.md
+|-- CLEANUP_SUMMARY.md
+|-- FILE_TREE.txt
+|-- PROJECT_STRUCTURE.md
+|-- README.md
+|-- __figma__entrypoint__.ts
+|-- default_shadcn_theme.css
+|-- package.json
+|-- pnpm-lock.yaml
+|-- pnpm-workspace.yaml
+|-- postcss.config.mjs
+`-- vite.config.ts
+
+11 directories, 31 files

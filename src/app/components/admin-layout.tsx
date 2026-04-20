@@ -103,16 +103,20 @@ export function AdminLayout() {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-800 space-y-2">
-          <button
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all w-full",
-              isCollapsed && "justify-center"
-            )}
-            title={isCollapsed ? "Settings" : undefined}
-          >
-            <Settings className="w-5 h-5 flex-shrink-0" />
-            {!isCollapsed && <span>Settings</span>}
-          </button>
+          <Link
+          to="/admin/settings"
+          className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full",
+            location.pathname === "/admin/settings"
+              ? "bg-white text-gray-900"
+              : "text-gray-300 hover:bg-gray-800 hover:text-white",
+            isCollapsed && "justify-center"
+          )}
+          title={isCollapsed ? "Settings" : undefined}
+        >
+          <Settings className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span>Settings</span>}
+        </Link>
           <button
             onClick={handleLogout}
             className={cn(

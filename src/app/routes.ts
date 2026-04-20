@@ -1,11 +1,11 @@
 import { createBrowserRouter } from "react-router";
-import { OrderingForm } from "./pages/ordering-form";
 import { Dashboard } from "./pages/dashboard";
 import { Inventory } from "./pages/inventory";
 import { Customers } from "./pages/customers";
 import { Delivery } from "./pages/delivery";
 import { Products } from "./pages/products";
 import { Discounts } from "./pages/discounts";
+import { AdminSettings } from "./pages/admin-settings";
 import { AdminLayout } from "./components/admin-layout";
 import { CustomerLayout } from "./components/customer-layout";
 import { Homepage } from "./pages/customer/homepage";
@@ -78,6 +78,7 @@ export const router = createBrowserRouter([
       { path: "customers", Component: Customers },
       { path: "delivery", Component: Delivery },
       { path: "reports", Component: Dashboard },
+      { path: "settings", Component: AdminSettings },
     ],
   },
 ]);

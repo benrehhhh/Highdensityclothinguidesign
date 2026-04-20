@@ -167,7 +167,7 @@ export function OrderTracking() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[400px] rounded-lg overflow-hidden border border-gray-200">
+                <div className="h-[400px] rounded-lg overflow-hidden border border-gray-200 relative z-0">
                   <MapWrapper
                     center={riderLocation}
                     zoom={13}
