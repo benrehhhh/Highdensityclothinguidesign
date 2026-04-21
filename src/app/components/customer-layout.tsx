@@ -54,8 +54,8 @@ export function CustomerLayout() {
   const navLinks = [
     { path: '/home', label: 'Home' },
     { path: '/home/catalog', label: 'Shop' },
-    { path: '/about', label: 'About' },
-    { path: '/contact', label: 'Contact' },
+    { path: '/home/about', label: 'About' },
+    { path: '/home/contact', label: 'Contact' },
   ];
 
   return (
@@ -278,8 +278,8 @@ export function CustomerLayout() {
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/home/catalog" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">Shop All</Link></li>
-                <li><Link to="/about" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">About Us</Link></li>
-                <li><Link to="/contact" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">Contact</Link></li>
+                <li><Link to="/home/about" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">About Us</Link></li>
+                <li><Link to="/home/contact" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">Contact</Link></li>
                 <li><Link to="/home/track-order" className="text-[#FFF5E6]/80 hover:text-[#DDB67D] transition-colors">Track Order</Link></li>
               </ul>
             </div>

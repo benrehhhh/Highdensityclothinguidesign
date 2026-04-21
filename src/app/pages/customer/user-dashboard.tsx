@@ -245,7 +245,7 @@ export function UserDashboard() {
                             ₱{order.total.toLocaleString()}
                           </p>
                         </div>
-                        <Link to="/home/track-order">
+                        <Link to="/home/reviews">
                           <Button variant="outline" size="sm" className="border-[#B7885E]/20">
                             View Details
                           </Button>

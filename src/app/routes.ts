@@ -51,20 +51,8 @@ export const router = createBrowserRouter([
       { path: "wishlist", Component: Wishlist },
       { path: "reviews", Component: Reviews },
       { path: "notifications", Component: Notifications },
-    ],
-  },
-  {
-    path: "/about",
-    Component: CustomerLayout,
-    children: [
-      { index: true, Component: About },
-    ],
-  },
-  {
-    path: "/contact",
-    Component: CustomerLayout,
-    children: [
-      { index: true, Component: Contact },
+      { path: "about", Component: About},
+      { path: "contact", Component: Contact},
     ],
   },
   {
