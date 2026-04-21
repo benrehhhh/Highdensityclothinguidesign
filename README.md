@@ -28,7 +28,7 @@ Recent cleanup details:
 
 ### Install Dependencies
 ```bash
-pnpm install
+npm install
 ```
 
 ### Run Development Server
