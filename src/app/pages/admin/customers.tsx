@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Users, 
   Search, 
@@ -23,6 +23,7 @@ import {
 } from '../../components/ui/dialog';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Textarea } from '../../components/ui/textarea';
+import { adminApi } from '../../lib/admin-api';
 
 const customers = [
   {
@@ -106,10 +107,11 @@ const customers = [
 ];
 
 export function Customers() {
+  const [customerList, setCustomerList] = useState(customers);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<typeof customers[0] | null>(null);
 
-  const filteredCustomers = customers.filter(customer =>
+  const filteredCustomers = customerList.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -135,6 +137,16 @@ export function Customers() {
     }
   };
 
+  useEffect(() => {
+    adminApi.getCustomers().then((rows) => {
+      setCustomerList(rows.map((row: any) => ({
+        ...row,
+        totalSpent: row.total_spent,
+        lastOrder: row.last_order
+      })));
+    }).catch(() => undefined);
+  }, []);
+
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
@@ -154,7 +166,7 @@ export function Customers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-[#8B7355]">Total Customers</p>
-                <p className="text-3xl font-semibold text-[#3B2C24] mt-1">{customers.length}</p>
+                <p className="text-3xl font-semibold text-[#3B2C24] mt-1">{customerList.length}</p>
               </div>
               <Users className="w-12 h-12 text-[#B7885E] opacity-20" />
             </div>
@@ -167,7 +179,7 @@ export function Customers() {
               <div>
                 <p className="text-sm text-[#8B7355]">VIP Customers</p>
                 <p className="text-3xl font-semibold text-purple-600 mt-1">
-                  {customers.filter(c => c.tag === 'VIP').length}
+                  {customerList.filter(c => c.tag === 'VIP').length}
                 </p>
               </div>
               <Star className="w-12 h-12 text-purple-500 opacity-20" />
@@ -181,7 +193,7 @@ export function Customers() {
               <div>
                 <p className="text-sm text-[#8B7355]">New This Month</p>
                 <p className="text-3xl font-semibold text-green-600 mt-1">
-                  {customers.filter(c => c.tag === 'New').length}
+                  {customerList.filter(c => c.tag === 'New').length}
                 </p>
               </div>
               <Users className="w-12 h-12 text-green-500 opacity-20" />
@@ -195,7 +207,7 @@ export function Customers() {
               <div>
                 <p className="text-sm text-[#8B7355]">Total Revenue</p>
                 <p className="text-3xl font-semibold text-[#B7885E] mt-1">
-                  ₱{customers.reduce((sum, c) => sum + c.totalSpent, 0).toLocaleString()}
+                  ₱{customerList.reduce((sum, c) => sum + c.totalSpent, 0).toLocaleString()}
                 </p>
               </div>
               <ShoppingBag className="w-12 h-12 text-[#B7885E] opacity-20" />

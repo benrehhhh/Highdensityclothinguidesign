@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
-import { getHeaderCounts } from '../lib/data-store';
+import { getHeaderCounts, subscribeStore } from '../lib/data-store';
 
 export function CustomerLayout() {
   const location = useLocation();
@@ -44,13 +44,7 @@ export function CustomerLayout() {
   }, []);
 
   useEffect(() => {
-    const syncCounts = () => setCounts(getHeaderCounts());
-    window.addEventListener("storage", syncCounts);
-    window.addEventListener("focus", syncCounts);
-    return () => {
-      window.removeEventListener("storage", syncCounts);
-      window.removeEventListener("focus", syncCounts);
-    };
+    return subscribeStore(() => setCounts(getHeaderCounts()));
   }, []);
 
   const handleLogout = () => {

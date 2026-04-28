@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Truck,
   Package,
@@ -36,6 +36,7 @@ import {
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { MapWrapper, riderIcon, warehouseIcon } from '../../components/map-wrapper';
+import { adminApi } from '../../lib/admin-api';
 
 type OrderStatus = 'Order Placed' | 'Processing' | 'Out for Delivery' | 'Delivered';
 
@@ -142,7 +143,7 @@ export function Delivery() {
       riderContact: '0917-345-6789',
       location: [14.5176, 121.0509]
     },
-  ]);
+    ]);
 
   const filteredOrders = deliveryOrders.filter(order =>
     order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -185,10 +186,18 @@ export function Delivery() {
     delivered: deliveryOrders.filter(o => o.status === 'Delivered').length,
   };
 
-  const handleAssignCourier = () => {
+  const handleAssignCourier = async () => {
     if (!assigningOrder) return;
 
     const trackingNum = courierForm.trackingNumber || `TRK${Date.now()}PH`;
+
+    await adminApi.updateDelivery(assigningOrder.id, {
+      courier: courierForm.courier,
+      riderName: courierForm.riderName,
+      riderContact: courierForm.riderContact,
+      trackingNumber: trackingNum,
+      status: "Processing"
+    });
 
     setDeliveryOrders(prev => prev.map(order =>
       order.id === assigningOrder.id
@@ -208,7 +217,8 @@ export function Delivery() {
     setCourierForm({ courier: '', riderName: '', riderContact: '', trackingNumber: '' });
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: OrderStatus) => {
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    await adminApi.updateDeliveryStatus(orderId, newStatus);
     setDeliveryOrders(prev => prev.map(order =>
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
@@ -218,6 +228,25 @@ export function Delivery() {
 
   // Warehouse location
   const warehouseLocation: [number, number] = [14.5995, 120.9842];
+
+  useEffect(() => {
+    adminApi.getDelivery().then((rows) => {
+      setDeliveryOrders(rows.map((row: any) => ({
+        id: String(row.id),
+        orderId: row.order_id,
+        customer: row.customer,
+        address: row.address,
+        items: row.items,
+        trackingNumber: row.tracking_number || "",
+        status: row.status,
+        placedDate: row.placed_date,
+        estimatedDelivery: row.estimated_delivery,
+        courier: row.courier || undefined,
+        riderName: row.rider_name || undefined,
+        riderContact: row.rider_contact || undefined
+      })));
+    }).catch(() => undefined);
+  }, []);
 
   return (
     <div className="p-8 space-y-8 bg-gray-50 min-h-screen">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Heart, ShoppingCart, Star, Truck, Shield, ArrowLeft, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -15,7 +15,7 @@ import { Input } from '../../components/ui/input';
 import { Separator } from '../../components/ui/separator';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { toast } from 'sonner';
-import { addToCart, getProductById, isWishlisted, toggleWishlist } from '../../lib/data-store';
+import { addToCart, getProductById, initStore, isWishlisted, subscribeStore, toggleWishlist } from '../../lib/data-store';
 
 const productImages = [
   'https://images.unsplash.com/photo-1568371600021-36b968768c30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYXBwYXJlbHxlbnwxfHx8fDE3NzM4ODc3Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080',
@@ -53,23 +53,33 @@ const reviews = [
 
 export function ProductDetails() {
   const { id } = useParams();
+  const productId = Number(id);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const product = getProductById(Number(id));
-  const [wishlisted, setWishlisted] = useState(product ? isWishlisted(product.id) : false);
+  const [wishlisted, setWishlisted] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const product = useMemo(() => getProductById(productId), [productId, refreshKey]);
+
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => {
+      setWishlisted(isWishlisted(productId));
+      setRefreshKey((key) => key + 1);
+    });
+  }, [productId]);
 
   if (!product) {
     return <div className="min-h-screen py-8 text-center text-[#8B7355]">Product not found.</div>;
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedSize || !selectedColor) {
       toast.error('Please select size and color');
       return;
     }
-    addToCart({
+    await addToCart({
       productId: product.id,
       name: product.name,
       price: product.price,
@@ -81,9 +91,9 @@ export function ProductDetails() {
     toast.success('Added to cart!');
   };
 
-  const handleAddToWishlist = () => {
-    toggleWishlist(product.id);
-    setWishlisted(!wishlisted);
+  const handleAddToWishlist = async () => {
+    await toggleWishlist(product.id);
+    setWishlisted(isWishlisted(product.id));
     toast.success(wishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
   };
 

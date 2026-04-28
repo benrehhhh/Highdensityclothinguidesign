@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from '../../components/ui/select';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { getCart, removeCartItem, updateCartItemQuantity } from '../../lib/data-store';
+import { getCart, initStore, removeCartItem, subscribeStore, updateCartItemQuantity } from '../../lib/data-store';
 
 interface CartItem {
   id: number;
@@ -27,18 +27,20 @@ interface CartItem {
 
 export function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>(getCart());
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => setCartItems(getCart()));
+  }, []);
 
   const [shippingMethod, setShippingMethod] = useState('standard');
 
-  const updateQuantity = (id: number, newQuantity: number) => {
+  const updateQuantity = async (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    updateCartItemQuantity(id, newQuantity);
-    setCartItems(getCart());
+    await updateCartItemQuantity(id, newQuantity);
   };
 
-  const removeItem = (id: number) => {
-    removeCartItem(id);
-    setCartItems(getCart());
+  const removeItem = async (id: number) => {
+    await removeCartItem(id);
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

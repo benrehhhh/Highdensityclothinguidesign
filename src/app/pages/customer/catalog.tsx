@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Search, Filter, Heart, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -13,16 +13,23 @@ import {
   SelectValue 
 } from '../../components/ui/select';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { getProducts } from '../../lib/data-store';
+import { getProducts, initStore, isWishlisted, subscribeStore, toggleWishlist } from '../../lib/data-store';
+import { toast } from 'sonner';
 
 export function Catalog() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const products = getProducts();
+  const [products, setProducts] = useState(getProducts());
   const focusSearch = searchParams.get("focusSearch") === "1";
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
+
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => setProducts(getProducts()));
+  }, []);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -126,7 +133,11 @@ export function Catalog() {
         {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {sortedProducts.map((product) => (
-            <Card key={product.id} className="border-[#B7885E]/20 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
+            <Card
+              key={product.id}
+              className="border-[#B7885E]/20 shadow-lg hover:shadow-xl transition-all group overflow-hidden cursor-pointer"
+              onClick={() => navigate(`/home/product/${product.id}`)}
+            >
               <div className="relative aspect-square overflow-hidden bg-[#f5ede0]">
                 <ImageWithFallback
                   src={product.image}
@@ -144,14 +155,21 @@ export function Catalog() {
                   <Button
                     size="icon"
                     variant="ghost"
+                    onClick={async (event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      await toggleWishlist(product.id);
+                      toast.success(isWishlisted(product.id) ? "Added to wishlist!" : "Removed from wishlist");
+                    }}
                     className="bg-white/90 hover:bg-white text-[#3B2C24]"
                   >
-                    <Heart className="w-4 h-4" />
+                    <Heart className={`w-4 h-4 ${isWishlisted(product.id) ? "fill-current text-[#B7885E]" : ""}`} />
                   </Button>
                   <Link to={`/home/product/${product.id}`}>
                     <Button
                       size="icon"
                       variant="ghost"
+                      onClick={(event) => event.stopPropagation()}
                       className="bg-white/90 hover:bg-white text-[#3B2C24]"
                     >
                       <Eye className="w-4 h-4" />
@@ -167,7 +185,7 @@ export function Catalog() {
               </div>
 
               <CardContent className="pt-4">
-                <Link to={`/home/product/${product.id}`}>
+                <Link to={`/home/product/${product.id}`} onClick={(event) => event.stopPropagation()}>
                   <h3 className="font-semibold text-[#3B2C24] mb-1 hover:text-[#B7885E] transition-colors">
                     {product.name}
                   </h3>
@@ -190,7 +208,7 @@ export function Catalog() {
                   <span className="text-xl font-semibold text-[#B7885E]">
                     ₱{product.price.toLocaleString()}
                   </span>
-                  <Link to={`/home/product/${product.id}`}>
+                  <Link to={`/home/product/${product.id}`} onClick={(event) => event.stopPropagation()}>
                     <Button size="sm" className="bg-[#B7885E] hover:bg-[#9d7350] text-white">
                       View
                     </Button>

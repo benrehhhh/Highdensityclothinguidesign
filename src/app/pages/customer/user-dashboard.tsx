@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, ShoppingBag, Heart, MapPin, Bell, Edit, Camera, Package } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
 import { Link } from 'react-router';
-import { getNotifications, getOrders } from '../../lib/data-store';
+import { getNotifications, getOrders, initStore, subscribeStore } from '../../lib/data-store';
 import { toast } from 'sonner';
 
 const savedAddresses = [
@@ -40,8 +40,16 @@ const savedAddresses = [
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
   const [profileImage, setProfileImage] = useState<string | null>(localStorage.getItem("userProfileImage"));
-  const userOrders = getOrders();
-  const notifications = getNotifications();
+  const [userOrders, setUserOrders] = useState(getOrders());
+  const [notifications, setNotifications] = useState(getNotifications());
+
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => {
+      setUserOrders(getOrders());
+      setNotifications(getNotifications());
+    });
+  }, []);
 
   const user = {
     name: 'Juan Dela Cruz',

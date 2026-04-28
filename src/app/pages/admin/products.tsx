@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Plus,
   Search,
@@ -33,6 +33,7 @@ import {
 import { Textarea } from '../../components/ui/textarea';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
+import { adminApi } from '../../lib/admin-api';
 
 interface Product {
   id: string;
@@ -131,7 +132,13 @@ export function Products() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddProduct = () => {
+  useEffect(() => {
+    adminApi.getProducts().then((items) => {
+      setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
+    }).catch(() => undefined);
+  }, []);
+
+  const handleAddProduct = async () => {
     if (!productForm.name || !productForm.category || !productForm.price || !productForm.stock) {
       toast.error('Please fill in all required fields');
       return;
@@ -151,40 +158,43 @@ export function Products() {
       status: productForm.status
     };
 
-    setProducts([...products, newProduct]);
+    await adminApi.createProduct({
+      ...newProduct,
+      inStock: newProduct.stock > 0,
+      image: newProduct.images[0] || ""
+    });
+    const items = await adminApi.getProducts();
+    setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
     setIsAddDialogOpen(false);
     resetForm();
     toast.success('Product added successfully');
   };
 
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!selectedProduct) return;
 
-    const updatedProducts = products.map(p =>
-      p.id === selectedProduct.id
-        ? {
-            ...p,
-            name: productForm.name,
-            category: productForm.category,
-            price: parseFloat(productForm.price),
-            discount: parseFloat(productForm.discount),
-            stock: parseInt(productForm.stock),
-            sizes: productForm.sizes,
-            colors: productForm.colors,
-            description: productForm.description,
-            status: productForm.status
-          }
-        : p
-    );
-
-    setProducts(updatedProducts);
+    await adminApi.updateProduct(selectedProduct.id, {
+      name: productForm.name,
+      category: productForm.category,
+      price: parseFloat(productForm.price),
+      stock: parseInt(productForm.stock),
+      sizes: productForm.sizes,
+      colors: productForm.colors,
+      description: productForm.description,
+      badge: null,
+      inStock: parseInt(productForm.stock) > 0,
+      image: selectedProduct.images?.[0] || ""
+    });
+    const items = await adminApi.getProducts();
+    setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
     setIsEditDialogOpen(false);
     setSelectedProduct(null);
     resetForm();
     toast.success('Product updated successfully');
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
+    await adminApi.deleteProduct(id);
     setProducts(products.filter(p => p.id !== id));
     toast.success('Product deleted successfully');
   };

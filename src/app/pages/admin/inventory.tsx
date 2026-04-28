@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Package, 
   Search, 
@@ -30,6 +30,7 @@ import {
 } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
+import { adminApi } from '../../lib/admin-api';
 
 const inventoryItems = [
   {
@@ -107,19 +108,24 @@ const inventoryItems = [
 ];
 
 export function Inventory() {
+  const [items, setItems] = useState(inventoryItems);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const filteredItems = inventoryItems.filter(item => {
+  const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const lowStockCount = inventoryItems.filter(item => item.status === 'Low Stock').length;
+  const lowStockCount = items.filter(item => item.status === 'Low Stock').length;
+
+  useEffect(() => {
+    adminApi.getInventory().then(setItems).catch(() => undefined);
+  }, []);
 
   return (
     <div className="p-8 space-y-8">
@@ -214,7 +220,7 @@ export function Inventory() {
               <div>
                 <p className="text-sm text-[#8B7355]">Total Products</p>
                 <p className="text-3xl font-semibold text-[#3B2C24] mt-1">
-                  {inventoryItems.length}
+                  {items.length}
                 </p>
               </div>
               <Package className="w-12 h-12 text-[#B7885E] opacity-20" />
@@ -242,7 +248,7 @@ export function Inventory() {
               <div>
                 <p className="text-sm text-[#8B7355]">Total Stock Value</p>
                 <p className="text-3xl font-semibold text-[#B7885E] mt-1">
-                  ₱{inventoryItems.reduce((sum, item) => sum + (item.stock * item.cost), 0).toLocaleString()}
+                  ₱{items.reduce((sum, item) => sum + (item.stock * item.cost), 0).toLocaleString()}
                 </p>
               </div>
               <CheckCircle2 className="w-12 h-12 text-[#B7885E] opacity-20" />

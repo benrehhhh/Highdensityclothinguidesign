@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Plus,
   Search,
@@ -31,6 +31,7 @@ import {
   SelectValue
 } from '../../components/ui/select';
 import { toast } from 'sonner';
+import { adminApi } from '../../lib/admin-api';
 
 interface Discount {
   id: string;
@@ -126,7 +127,25 @@ export function Discounts() {
     return matchesSearch && matchesType;
   });
 
-  const handleAddDiscount = () => {
+  useEffect(() => {
+    adminApi.getDiscounts().then((rows) => {
+      setDiscounts(rows.map((row) => ({
+        id: String(row.id),
+        code: row.code,
+        type: row.type,
+        value: row.value,
+        valueType: row.value_type,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        minPurchase: row.min_purchase,
+        maxUses: row.max_uses,
+        currentUses: row.current_uses,
+        status: row.status
+      })));
+    }).catch(() => undefined);
+  }, []);
+
+  const handleAddDiscount = async () => {
     if (!discountForm.code || !discountForm.value || !discountForm.startDate || !discountForm.endDate) {
       toast.error('Please fill in all required fields');
       return;
@@ -146,44 +165,74 @@ export function Discounts() {
       status: 'Active'
     };
 
-    setDiscounts([...discounts, newDiscount]);
+    await adminApi.createDiscount(newDiscount);
+    const refreshed = await adminApi.getDiscounts();
+    setDiscounts(refreshed.map((row) => ({
+      id: String(row.id),
+      code: row.code,
+      type: row.type,
+      value: row.value,
+      valueType: row.value_type,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      minPurchase: row.min_purchase,
+      maxUses: row.max_uses,
+      currentUses: row.current_uses,
+      status: row.status
+    })));
     setIsAddDialogOpen(false);
     resetForm();
     toast.success('Discount created successfully');
   };
 
-  const handleEditDiscount = () => {
+  const handleEditDiscount = async () => {
     if (!selectedDiscount) return;
 
-    const updatedDiscounts = discounts.map(d =>
-      d.id === selectedDiscount.id
-        ? {
-            ...d,
-            code: discountForm.code.toUpperCase(),
-            type: discountForm.type,
-            value: parseFloat(discountForm.value),
-            valueType: discountForm.valueType,
-            startDate: discountForm.startDate,
-            endDate: discountForm.endDate,
-            minPurchase: parseFloat(discountForm.minPurchase) || 0,
-            maxUses: parseInt(discountForm.maxUses) || 0,
-          }
-        : d
-    );
-
-    setDiscounts(updatedDiscounts);
+    await adminApi.updateDiscount(selectedDiscount.id, {
+      code: discountForm.code.toUpperCase(),
+      type: discountForm.type,
+      value: parseFloat(discountForm.value),
+      valueType: discountForm.valueType,
+      startDate: discountForm.startDate,
+      endDate: discountForm.endDate,
+      minPurchase: parseFloat(discountForm.minPurchase) || 0,
+      maxUses: parseInt(discountForm.maxUses) || 0,
+      currentUses: selectedDiscount.currentUses,
+      status: selectedDiscount.status
+    });
+    const refreshed = await adminApi.getDiscounts();
+    setDiscounts(refreshed.map((row) => ({
+      id: String(row.id),
+      code: row.code,
+      type: row.type,
+      value: row.value,
+      valueType: row.value_type,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      minPurchase: row.min_purchase,
+      maxUses: row.max_uses,
+      currentUses: row.current_uses,
+      status: row.status
+    })));
     setIsEditDialogOpen(false);
     setSelectedDiscount(null);
     resetForm();
     toast.success('Discount updated successfully');
   };
 
-  const handleDeleteDiscount = (id: string) => {
+  const handleDeleteDiscount = async (id: string) => {
+    await adminApi.deleteDiscount(id);
     setDiscounts(discounts.filter(d => d.id !== id));
     toast.success('Discount deleted successfully');
   };
 
-  const toggleStatus = (id: string) => {
+  const toggleStatus = async (id: string) => {
+    const target = discounts.find((discount) => discount.id === id);
+    if (!target) return;
+    await adminApi.updateDiscount(id, {
+      ...target,
+      status: target.status === "Active" ? "Inactive" : "Active"
+    });
     setDiscounts(discounts.map(d =>
       d.id === id
         ? { ...d, status: d.status === 'Active' ? 'Inactive' : 'Active' }

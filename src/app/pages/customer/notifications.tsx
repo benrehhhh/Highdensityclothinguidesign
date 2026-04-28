@@ -1,10 +1,10 @@
 import { Package, TrendingUp, Bell, Gift, AlertCircle, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../lib/data-store';
+import { getNotifications, initStore, markAllNotificationsRead, markNotificationRead, subscribeStore } from '../../lib/data-store';
 
 interface Notification {
   id: number;
@@ -17,7 +17,17 @@ interface Notification {
 
 export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>(getNotifications());
+  const [activeFilter, setActiveFilter] = useState<'all' | Notification['type']>('all');
   const unreadCount = notifications.filter(n => !n.read).length;
+  const filteredNotifications = useMemo(() => {
+    if (activeFilter === 'all') return notifications;
+    return notifications.filter((notification) => notification.type === activeFilter);
+  }, [activeFilter, notifications]);
+
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => setNotifications(getNotifications()));
+  }, []);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -73,9 +83,8 @@ export function Notifications() {
             <Button
               variant="outline"
               className="border-[#B7885E]/20 text-[#3B2C24]"
-              onClick={() => {
-                markAllNotificationsRead();
-                setNotifications(getNotifications());
+              onClick={async () => {
+                await markAllNotificationsRead();
               }}
             >
               <Check className="w-4 h-4 mr-2" />
@@ -88,22 +97,27 @@ export function Notifications() {
         <Card className="border-[#B7885E]/20 shadow-lg bg-white mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="border-[#B7885E]/20 bg-[#B7885E] text-white hover:bg-[#9d7350] hover:text-white">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveFilter("all")}
+                className={`border-[#B7885E]/20 ${activeFilter === "all" ? "bg-[#B7885E] text-white hover:bg-[#9d7350] hover:text-white" : "text-[#3B2C24]"}`}
+              >
                 All
               </Button>
-              <Button variant="outline" size="sm" className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button variant="outline" size="sm" onClick={() => setActiveFilter("order")} className="border-[#B7885E]/20 text-[#3B2C24]">
                 <Package className="w-4 h-4 mr-1" />
                 Orders
               </Button>
-              <Button variant="outline" size="sm" className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button variant="outline" size="sm" onClick={() => setActiveFilter("promo")} className="border-[#B7885E]/20 text-[#3B2C24]">
                 <Gift className="w-4 h-4 mr-1" />
                 Promotions
               </Button>
-              <Button variant="outline" size="sm" className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button variant="outline" size="sm" onClick={() => setActiveFilter("delivery")} className="border-[#B7885E]/20 text-[#3B2C24]">
                 <TrendingUp className="w-4 h-4 mr-1" />
                 Delivery
               </Button>
-              <Button variant="outline" size="sm" className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button variant="outline" size="sm" onClick={() => setActiveFilter("system")} className="border-[#B7885E]/20 text-[#3B2C24]">
                 <AlertCircle className="w-4 h-4 mr-1" />
                 System
               </Button>
@@ -113,7 +127,7 @@ export function Notifications() {
 
         {/* Notifications List */}
         <div className="space-y-4">
-          {notifications.map((notification, index) => (
+          {filteredNotifications.map((notification) => (
             <Card
               key={notification.id}
               className={`border-[#B7885E]/20 shadow-lg transition-all hover:shadow-xl ${
@@ -156,9 +170,8 @@ export function Notifications() {
                           variant="ghost"
                           size="sm"
                           className="text-[#8B7355] hover:text-[#3B2C24] hover:bg-[#FFF5E6] h-8 px-3"
-                        onClick={() => {
-                          markNotificationRead(notification.id);
-                          setNotifications(getNotifications());
+                        onClick={async () => {
+                          await markNotificationRead(notification.id);
                         }}
                         >
                           Mark as Read
@@ -173,7 +186,7 @@ export function Notifications() {
         </div>
 
         {/* Empty State (if needed) */}
-        {notifications.length === 0 && (
+        {filteredNotifications.length === 0 && (
           <Card className="border-[#B7885E]/20 shadow-lg bg-white">
             <CardContent className="py-16 text-center">
               <Bell className="w-16 h-16 text-[#B7885E] mx-auto mb-4 opacity-50" />
@@ -184,7 +197,7 @@ export function Notifications() {
         )}
 
         {/* Load More */}
-        {notifications.length > 0 && (
+        {filteredNotifications.length > 0 && (
           <div className="mt-8 text-center">
             <Button variant="outline" className="border-[#B7885E]/20 text-[#3B2C24]">
               Load More Notifications

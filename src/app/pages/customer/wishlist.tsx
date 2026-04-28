@@ -1,19 +1,24 @@
 import { Link } from 'react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Heart, ShoppingCart, X, Sparkles } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { toast } from 'sonner';
-import { addToCart, getWishlistProducts, toggleWishlist } from '../../lib/data-store';
+import { addToCart, getWishlistProducts, initStore, subscribeStore, toggleWishlist } from '../../lib/data-store';
 
 export function Wishlist() {
   const [wishlistItems, setWishlistItems] = useState(getWishlistProducts());
+  useEffect(() => {
+    initStore().catch(() => undefined);
+    return subscribeStore(() => setWishlistItems(getWishlistProducts()));
+  }, []);
+
   const handleRemove = (id: number, name: string) => {
-    toggleWishlist(id);
-    setWishlistItems(getWishlistProducts());
-    toast.success(`${name} removed from wishlist`);
+    toggleWishlist(id).then(() => {
+      toast.success(`${name} removed from wishlist`);
+    });
   };
 
   const handleAddToCart = (item: (typeof wishlistItems)[number]) => {
@@ -90,7 +95,7 @@ export function Wishlist() {
                 </div>
 
                 <CardContent className="pt-4">
-                  <Link to={`/home/product/${item.productId}`}>
+                  <Link to={`/home/product/${item.id}`}>
                     <h3 className="font-semibold text-[#3B2C24] mb-2 hover:text-[#B7885E] transition-colors">
                       {item.name}
                     </h3>
@@ -112,7 +117,7 @@ export function Wishlist() {
                       <ShoppingCart className="w-4 h-4 mr-1" />
                       Add to Cart
                     </Button>
-                    <Link to={`/home/product/${item.productId}`} className="flex-1">
+                    <Link to={`/home/product/${item.id}`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full border-[#B7885E]/20">
                         View
                       </Button>

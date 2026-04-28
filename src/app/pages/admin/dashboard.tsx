@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
+import { useNavigate } from 'react-router';
+import { adminApi } from '../../lib/admin-api';
 import { 
   BarChart, 
   Bar, 
@@ -41,12 +43,23 @@ const recentOrders = [
 ];
 
 export function Dashboard() {
+  const navigate = useNavigate();
+  const [summary, setSummary] = useState({
+    ordersToday: 0,
+    pendingDeliveries: 0,
+    lowStockAlerts: 0,
+    monthlySales: 0
+  });
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
+
+  useEffect(() => {
+    adminApi.getDashboardSummary().then(setSummary).catch(() => undefined);
+  }, []);
 
   return (
     <div className="p-8 space-y-8 bg-gradient-to-b from-[#f8f5f2] to-white min-h-screen">
@@ -75,7 +88,7 @@ export function Dashboard() {
             <ShoppingCart className="w-5 h-5 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-gray-900">24</div>
+            <div className="text-3xl font-semibold text-gray-900">{summary.ordersToday}</div>
             <p className="text-xs text-gray-600 flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-600" />
               <span className="text-green-600">+12%</span> from yesterday
@@ -91,7 +104,7 @@ export function Dashboard() {
             <Package className="w-5 h-5 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-gray-900">8</div>
+            <div className="text-3xl font-semibold text-gray-900">{summary.pendingDeliveries}</div>
             <p className="text-xs text-gray-600 mt-2">
               3 dispatched today
             </p>
@@ -106,7 +119,7 @@ export function Dashboard() {
             <AlertCircle className="w-5 h-5 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-gray-900">5</div>
+            <div className="text-3xl font-semibold text-gray-900">{summary.lowStockAlerts}</div>
             <p className="text-xs text-red-600 mt-2">
               Needs restocking
             </p>
@@ -121,7 +134,7 @@ export function Dashboard() {
             <DollarSign className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-gray-900">₱67,000</div>
+            <div className="text-3xl font-semibold text-gray-900">₱{summary.monthlySales.toLocaleString()}</div>
             <p className="text-xs text-gray-600 flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-600" />
               <span className="text-green-600">+22%</span> from last month
@@ -279,7 +292,10 @@ export function Dashboard() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Card className="border-gray-200 bg-gradient-to-br from-[#B7885E] to-[#9d7350] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
+        <Card
+          className="border-gray-200 bg-gradient-to-br from-[#B7885E] to-[#9d7350] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer"
+          onClick={() => navigate("/admin/products")}
+        >
           <CardContent className="pt-6">
             <Package className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">Add Product</h3>
@@ -287,7 +303,10 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 bg-gradient-to-br from-[#DDB67D] to-[#B7885E] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
+        <Card
+          className="border-gray-200 bg-gradient-to-br from-[#DDB67D] to-[#B7885E] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer"
+          onClick={() => navigate("/admin/orders")}
+        >
           <CardContent className="pt-6">
             <ShoppingCart className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">View Orders</h3>
@@ -295,7 +314,10 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 bg-gradient-to-br from-[#3B2C24] to-[#4a3a30] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer">
+        <Card
+          className="border-gray-200 bg-gradient-to-br from-[#3B2C24] to-[#4a3a30] text-white shadow-sm hover:shadow-xl transition-shadow cursor-pointer"
+          onClick={() => navigate("/admin/delivery")}
+        >
           <CardContent className="pt-6">
             <Users className="w-10 h-10 mb-3 opacity-90" />
             <h3 className="font-semibold text-lg mb-1">Process Delivery</h3>
