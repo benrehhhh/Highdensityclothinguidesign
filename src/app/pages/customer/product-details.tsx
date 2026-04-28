@@ -15,6 +15,7 @@ import { Input } from '../../components/ui/input';
 import { Separator } from '../../components/ui/separator';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { toast } from 'sonner';
+import { addToCart, getProductById, isWishlisted, toggleWishlist } from '../../lib/data-store';
 
 const productImages = [
   'https://images.unsplash.com/photo-1568371600021-36b968768c30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYXBwYXJlbHxlbnwxfHx8fDE3NzM4ODc3Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080',
@@ -56,40 +57,34 @@ export function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const product = getProductById(Number(id));
+  const [wishlisted, setWishlisted] = useState(product ? isWishlisted(product.id) : false);
 
-  const product = {
-    id: id,
-    name: 'Handcrafted Cotton Shirt',
-    price: 1299,
-    originalPrice: 1599,
-    rating: 4.8,
-    reviewCount: 24,
-    description: 'Premium handmade cotton shirt with meticulous attention to detail. Each piece is carefully crafted to ensure comfort and durability. Made from 100% organic cotton, this shirt is breathable, soft, and perfect for everyday wear.',
-    materials: '100% Organic Cotton, Natural Dyes, Handwoven Fabric',
-    care: 'Machine wash cold, Tumble dry low, Do not bleach',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    colors: [
-      { name: 'Beige', hex: '#F5DEB3' },
-      { name: 'Cream', hex: '#FFFDD0' },
-      { name: 'Brown', hex: '#8B7355' },
-      { name: 'Black', hex: '#000000' }
-    ],
-    stock: 15,
-    badge: 'Bestseller'
-  };
+  if (!product) {
+    return <div className="min-h-screen py-8 text-center text-[#8B7355]">Product not found.</div>;
+  }
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
       toast.error('Please select size and color');
       return;
     }
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      size: selectedSize,
+      color: selectedColor,
+      quantity,
+      image: product.image
+    });
     toast.success('Added to cart!');
   };
 
   const handleAddToWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
+    toggleWishlist(product.id);
+    setWishlisted(!wishlisted);
+    toast.success(wishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
   };
 
   return (
@@ -109,7 +104,7 @@ export function ProductDetails() {
             {/* Main Image */}
             <div className="aspect-square rounded-lg overflow-hidden bg-[#f5ede0] shadow-lg">
               <ImageWithFallback
-                src={productImages[selectedImage]}
+                src={product.image || productImages[selectedImage]}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -221,20 +216,20 @@ export function ProductDetails() {
               <div className="flex gap-3">
                 {product.colors.map((color) => (
                   <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color.name)}
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
                     className={`group relative w-12 h-12 rounded-full border-2 transition-all ${
-                      selectedColor === color.name
+                      selectedColor === color
                         ? 'border-[#B7885E] scale-110'
                         : 'border-gray-300 hover:border-[#DDB67D]'
                     }`}
-                    title={color.name}
+                    title={color}
                   >
                     <div
                       className="w-full h-full rounded-full"
-                      style={{ backgroundColor: color.hex }}
+                      style={{ backgroundColor: color.toLowerCase() }}
                     />
-                    {selectedColor === color.name && (
+                    {selectedColor === color && (
                       <Check className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-white drop-shadow" />
                     )}
                   </button>
@@ -272,10 +267,10 @@ export function ProductDetails() {
                 onClick={handleAddToWishlist}
                 variant="outline"
                 className={`border-[#B7885E]/20 py-6 ${
-                  isWishlisted ? 'bg-[#FFF5E6] text-[#B7885E]' : 'text-[#3B2C24]'
+                  wishlisted ? 'bg-[#FFF5E6] text-[#B7885E]' : 'text-[#3B2C24]'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
               </Button>
             </div>
 
@@ -329,7 +324,7 @@ export function ProductDetails() {
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-[#3B2C24]">Customer Reviews</h2>
-            <Link to="/reviews">
+            <Link to="/home/reviews">
               <Button variant="outline" className="border-[#B7885E]/20 text-[#3B2C24]">
                 Write a Review
               </Button>

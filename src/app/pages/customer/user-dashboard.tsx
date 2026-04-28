@@ -9,30 +9,8 @@ import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
 import { Link } from 'react-router';
-
-const userOrders = [
-  {
-    id: 'ORD-001',
-    date: '2024-03-15',
-    status: 'Delivered',
-    total: 2598,
-    items: 2
-  },
-  {
-    id: 'ORD-002',
-    date: '2024-03-10',
-    status: 'In Transit',
-    total: 1599,
-    items: 1
-  },
-  {
-    id: 'ORD-003',
-    date: '2024-03-05',
-    status: 'Processing',
-    total: 4297,
-    items: 3
-  }
-];
+import { getNotifications, getOrders } from '../../lib/data-store';
+import { toast } from 'sonner';
 
 const savedAddresses = [
   {
@@ -59,35 +37,11 @@ const savedAddresses = [
   }
 ];
 
-const notifications = [
-  {
-    id: 1,
-    type: 'order',
-    title: 'Order Delivered',
-    message: 'Your order ORD-001 has been delivered',
-    time: '2 hours ago',
-    read: false
-  },
-  {
-    id: 2,
-    type: 'promo',
-    title: 'New Promotion',
-    message: '20% off on all items this weekend!',
-    time: '1 day ago',
-    read: false
-  },
-  {
-    id: 3,
-    type: 'order',
-    title: 'Order Shipped',
-    message: 'Your order ORD-002 is on the way',
-    time: '2 days ago',
-    read: true
-  }
-];
-
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [profileImage, setProfileImage] = useState<string | null>(localStorage.getItem("userProfileImage"));
+  const userOrders = getOrders();
+  const notifications = getNotifications();
 
   const user = {
     name: 'Juan Dela Cruz',
@@ -124,6 +78,7 @@ export function UserDashboard() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="w-20 h-20 bg-[#B7885E] text-white">
+                  {profileImage ? <img src={profileImage} alt={user.name} className="w-full h-full object-cover" /> : null}
                   <AvatarFallback className="bg-[#B7885E] text-white text-2xl">
                     {user.initials}
                   </AvatarFallback>
@@ -131,9 +86,28 @@ export function UserDashboard() {
                 <Button
                   size="icon"
                   className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#DDB67D] hover:bg-[#B7885E] text-white"
+                  onClick={() => document.getElementById("user-profile-upload")?.click()}
                 >
                   <Camera className="w-3 h-3" />
                 </Button>
+                <input
+                  id="user-profile-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = reader.result as string;
+                      setProfileImage(dataUrl);
+                      localStorage.setItem("userProfileImage", dataUrl);
+                      toast.success("Profile image updated");
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-[#3B2C24]">{user.name}</h3>
@@ -245,7 +219,7 @@ export function UserDashboard() {
                             ₱{order.total.toLocaleString()}
                           </p>
                         </div>
-                        <Link to="/home/reviews">
+                        <Link to={order.status === "Delivered" ? "/home/reviews" : "/home/track-order"}>
                           <Button variant="outline" size="sm" className="border-[#B7885E]/20">
                             View Details
                           </Button>

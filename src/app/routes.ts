@@ -6,6 +6,7 @@ import { Delivery } from "./pages/admin/delivery";
 import { Products } from "./pages/admin/products";
 import { Discounts } from "./pages/admin/discounts";
 import { AdminSettings } from "./pages/admin/settings";
+import { Reports } from "./pages/admin/reports";
 import { AdminLayout } from "./components/admin-layout";
 import { CustomerLayout } from "./components/customer-layout";
 import { Homepage } from "./pages/customer/homepage";
@@ -65,7 +66,7 @@ export const router = createBrowserRouter([
       { path: "discounts", Component: Discounts },
       { path: "customers", Component: Customers },
       { path: "delivery", Component: Delivery },
-      { path: "reports", Component: Dashboard },
+      { path: "reports", Component: Reports },
       { path: "settings", Component: AdminSettings },
     ],
   },

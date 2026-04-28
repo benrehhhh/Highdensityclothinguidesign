@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Search, Filter, Heart, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -13,96 +13,13 @@ import {
   SelectValue 
 } from '../../components/ui/select';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-
-const products = [
-  {
-    id: 1,
-    name: 'Handcrafted Cotton Shirt',
-    category: 'Tops',
-    price: 1299,
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    colors: ['Beige', 'Cream', 'Brown'],
-    image: 'https://images.unsplash.com/photo-1568371600021-36b968768c30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYXBwYXJlbHxlbnwxfHx8fDE3NzM4ODc3Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    badge: 'Bestseller',
-    inStock: true
-  },
-  {
-    id: 2,
-    name: 'Linen Casual Polo',
-    category: 'Tops',
-    price: 1599,
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['White', 'Beige', 'Gray'],
-    image: 'https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaW5pbWFsJTIwY2xvdGhpbmclMjBkZXNpZ258ZW58MXx8fHwxNzczODYyNzMxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    badge: 'New',
-    inStock: true
-  },
-  {
-    id: 3,
-    name: 'Premium Cotton Jacket',
-    category: 'Outerwear',
-    price: 2499,
-    sizes: ['M', 'L', 'XL', 'XXL'],
-    colors: ['Brown', 'Black', 'Navy'],
-    image: 'https://images.unsplash.com/photo-1619708838487-d18b744f2ea4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYmFubmVyJTIwaGVyb3xlbnwxfHx8fDE3NzM4ODk4MjN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    badge: 'Premium',
-    inStock: true
-  },
-  {
-    id: 4,
-    name: 'Artisan Cotton Shirt',
-    category: 'Tops',
-    price: 1399,
-    sizes: ['XS', 'S', 'M', 'L'],
-    colors: ['Cream', 'Beige', 'White'],
-    image: 'https://images.unsplash.com/photo-1759366079659-dc182506fe63?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpc2FuJTIwaGFuZG1hZGUlMjBzaGlydHxlbnwxfHx8fDE3NzM4ODk4MjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    badge: 'Featured',
-    inStock: true
-  },
-  {
-    id: 5,
-    name: 'Embroidered T-Shirt',
-    category: 'Tops',
-    price: 899,
-    sizes: ['S', 'M', 'L'],
-    colors: ['White', 'Beige', 'Black'],
-    image: 'https://images.unsplash.com/photo-1568371600021-36b968768c30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYXBwYXJlbHxlbnwxfHx8fDE3NzM4ODc3Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    inStock: true
-  },
-  {
-    id: 6,
-    name: 'Woven Fabric Vest',
-    category: 'Outerwear',
-    price: 1799,
-    sizes: ['M', 'L', 'XL'],
-    colors: ['Brown', 'Gray'],
-    image: 'https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaW5pbWFsJTIwY2xvdGhpbmclMjBkZXNpZ258ZW58MXx8fHwxNzczODYyNzMxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    inStock: true
-  },
-  {
-    id: 7,
-    name: 'Classic Button-Down',
-    category: 'Tops',
-    price: 1199,
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['White', 'Blue', 'Beige'],
-    image: 'https://images.unsplash.com/photo-1759366079659-dc182506fe63?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpc2FuJTIwaGFuZG1hZGUlMjBzaGlydHxlbnwxfHx8fDE3NzM4ODk4MjR8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    inStock: true
-  },
-  {
-    id: 8,
-    name: 'Artisan Hoodie',
-    category: 'Outerwear',
-    price: 2199,
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    colors: ['Gray', 'Brown', 'Black'],
-    image: 'https://images.unsplash.com/photo-1619708838487-d18b744f2ea4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYmFubmVyJTIwaGVyb3xlbnwxfHx8fDE3NzM4ODk4MjN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    inStock: true
-  }
-];
+import { getProducts } from '../../lib/data-store';
 
 export function Catalog() {
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const products = getProducts();
+  const focusSearch = searchParams.get("focusSearch") === "1";
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
@@ -148,6 +65,7 @@ export function Catalog() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-[#B7885E]/20"
+                  autoFocus={focusSearch}
                 />
               </div>
 

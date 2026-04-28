@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 export function AdminSettings() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [adminProfileImage, setAdminProfileImage] = useState<string | null>(localStorage.getItem("adminProfileImage"));
 
   const admin = {
     name: 'Admin User',
@@ -50,6 +51,7 @@ export function AdminSettings() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="w-20 h-20 bg-gray-900 text-white">
+                  {adminProfileImage ? <img src={adminProfileImage} alt={admin.name} className="w-full h-full object-cover" /> : null}
                   <AvatarFallback className="bg-gray-900 text-white text-2xl">
                     {admin.initials}
                   </AvatarFallback>
@@ -57,9 +59,28 @@ export function AdminSettings() {
                 <Button
                   size="icon"
                   className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-800 text-white"
+                  onClick={() => document.getElementById("admin-profile-upload")?.click()}
                 >
                   <Camera className="w-3 h-3" />
                 </Button>
+                <input
+                  id="admin-profile-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = reader.result as string;
+                      setAdminProfileImage(dataUrl);
+                      localStorage.setItem("adminProfileImage", dataUrl);
+                      toast.success("Admin profile image updated");
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-gray-900">{admin.name}</h3>

@@ -49,9 +49,9 @@ export function Dashboard() {
   });
 
   return (
-    <div className="p-8 space-y-8 bg-white min-h-screen">
+    <div className="p-8 space-y-8 bg-gradient-to-b from-[#f8f5f2] to-white min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between bg-white rounded-xl border border-[#B7885E]/20 p-6 shadow-sm">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 flex items-center gap-2 mt-1">
@@ -67,7 +67,7 @@ export function Dashboard() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-[#B7885E]/20 bg-white shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-900">
               Total Orders Today
@@ -83,7 +83,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-[#B7885E]/20 bg-white shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-900">
               Pending Deliveries
@@ -98,7 +98,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-shadow">
+        <Card className="border-[#B7885E]/20 bg-white shadow-sm hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-900">
               Low Stock Alerts
@@ -113,7 +113,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-200 bg-white shadow-sm hover:shadow-xl transition-shadow">
+        <Card className="border-[#B7885E]/20 bg-white shadow-sm hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-900">
               Monthly Sales

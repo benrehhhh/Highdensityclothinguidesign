@@ -12,6 +12,7 @@ import {
   SelectValue 
 } from '../../components/ui/select';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { getCart, removeCartItem, updateCartItemQuantity } from '../../lib/data-store';
 
 interface CartItem {
   id: number;
@@ -25,52 +26,19 @@ interface CartItem {
 }
 
 export function Cart() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      productId: 1,
-      name: 'Handcrafted Cotton Shirt',
-      price: 1299,
-      size: 'M',
-      color: 'Beige',
-      quantity: 2,
-      image: 'https://images.unsplash.com/photo-1568371600021-36b968768c30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYXBwYXJlbHxlbnwxfHx8fDE3NzM4ODc3Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080'
-    },
-    {
-      id: 2,
-      productId: 2,
-      name: 'Linen Casual Polo',
-      price: 1599,
-      size: 'L',
-      color: 'White',
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaW5pbWFsJTIwY2xvdGhpbmclMjBkZXNpZ258ZW58MXx8fHwxNzczODYyNzMxfDA&ixlib=rb-4.1.0&q=80&w=1080'
-    },
-    {
-      id: 3,
-      productId: 4,
-      name: 'Artisan Cotton Shirt',
-      price: 1399,
-      size: 'M',
-      color: 'Cream',
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1759366079659-dc182506fe63?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpc2FuJTIwaGFuZG1hZGUlMjBzaGlydHxlbnwxfHx8fDE3NzM4ODk4MjR8MA&ixlib=rb-4.1.0&q=80&w=1080'
-    }
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(getCart());
 
   const [shippingMethod, setShippingMethod] = useState('standard');
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    updateCartItemQuantity(id, newQuantity);
+    setCartItems(getCart());
   };
 
   const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+    removeCartItem(id);
+    setCartItems(getCart());
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -238,7 +206,7 @@ export function Cart() {
                   </div>
 
                   {/* Checkout Button */}
-                  <Link to="/checkout">
+                  <Link to="/home/checkout">
                     <Button className="w-full bg-[#B7885E] hover:bg-[#9d7350] text-white py-6 mt-4">
                       Proceed to Checkout
                       <ArrowRight className="w-5 h-5 ml-2" />

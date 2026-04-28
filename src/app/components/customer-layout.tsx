@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { toast } from 'sonner';
+import { getHeaderCounts } from '../lib/data-store';
 
 export function CustomerLayout() {
   const location = useLocation();
@@ -32,15 +33,24 @@ export function CustomerLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
-  const cartCount = 3;
-  const wishlistCount = 5;
-  const notificationCount = 2;
+  const [counts, setCounts] = useState(getHeaderCounts());
 
   useEffect(() => {
     const userAuth = localStorage.getItem('userAuth');
     const storedUserName = localStorage.getItem('userName');
     setIsLoggedIn(userAuth === 'true');
     setUserName(storedUserName || 'User');
+    setCounts(getHeaderCounts());
+  }, []);
+
+  useEffect(() => {
+    const syncCounts = () => setCounts(getHeaderCounts());
+    window.addEventListener("storage", syncCounts);
+    window.addEventListener("focus", syncCounts);
+    return () => {
+      window.removeEventListener("storage", syncCounts);
+      window.removeEventListener("focus", syncCounts);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -100,6 +110,7 @@ export function CustomerLayout() {
                 variant="ghost"
                 size="icon"
                 className="hidden sm:flex text-[#3B2C24] hover:text-[#B7885E] hover:bg-[#FFF5E6]"
+                onClick={() => navigate("/home/catalog?focusSearch=1")}
               >
                 <Search className="w-5 h-5" />
               </Button>
@@ -112,9 +123,9 @@ export function CustomerLayout() {
                   className="relative text-[#3B2C24] hover:text-[#B7885E] hover:bg-[#FFF5E6]"
                 >
                   <Bell className="w-5 h-5" />
-                  {notificationCount > 0 && (
+                  {counts.notifications > 0 && (
                     <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-                      {notificationCount}
+                      {counts.notifications}
                     </Badge>
                   )}
                 </Button>
@@ -128,9 +139,9 @@ export function CustomerLayout() {
                   className="relative text-[#3B2C24] hover:text-[#B7885E] hover:bg-[#FFF5E6]"
                 >
                   <Heart className="w-5 h-5" />
-                  {wishlistCount > 0 && (
+                  {counts.wishlist > 0 && (
                     <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-[#B7885E] text-white text-xs">
-                      {wishlistCount}
+                      {counts.wishlist}
                     </Badge>
                   )}
                 </Button>
@@ -144,9 +155,9 @@ export function CustomerLayout() {
                   className="relative text-[#3B2C24] hover:text-[#B7885E] hover:bg-[#FFF5E6]"
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  {cartCount > 0 && (
+                  {counts.cart > 0 && (
                     <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-[#B7885E] text-white text-xs">
-                      {cartCount}
+                      {counts.cart}
                     </Badge>
                   )}
                 </Button>

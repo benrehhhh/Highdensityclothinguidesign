@@ -1,8 +1,10 @@
 import { Package, TrendingUp, Bell, Gift, AlertCircle, Check } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../lib/data-store';
 
 interface Notification {
   id: number;
@@ -13,74 +15,8 @@ interface Notification {
   read: boolean;
 }
 
-const notifications: Notification[] = [
-  {
-    id: 1,
-    type: 'delivery',
-    title: 'Order Delivered',
-    message: 'Your order ORD-001 has been successfully delivered. Thank you for shopping with us!',
-    time: '2 hours ago',
-    read: false
-  },
-  {
-    id: 2,
-    type: 'promo',
-    title: 'Weekend Sale Alert! 🎉',
-    message: '20% off on all handcrafted items this weekend! Use code WEEKEND20 at checkout.',
-    time: '1 day ago',
-    read: false
-  },
-  {
-    id: 3,
-    type: 'order',
-    title: 'Order Shipped',
-    message: 'Your order ORD-002 is on the way! Track your package with tracking number TRK987654321.',
-    time: '2 days ago',
-    read: true
-  },
-  {
-    id: 4,
-    type: 'system',
-    title: 'New Arrivals Available',
-    message: 'Check out our latest collection of handcrafted cotton shirts. Limited stock available!',
-    time: '3 days ago',
-    read: true
-  },
-  {
-    id: 5,
-    type: 'order',
-    title: 'Order Confirmed',
-    message: 'We have received your order ORD-003. Our artisans are preparing your items with care.',
-    time: '5 days ago',
-    read: true
-  },
-  {
-    id: 6,
-    type: 'promo',
-    title: 'Exclusive Member Discount',
-    message: 'As a valued customer, enjoy 15% off your next purchase. Code: MEMBER15',
-    time: '1 week ago',
-    read: true
-  },
-  {
-    id: 7,
-    type: 'delivery',
-    title: 'Delivery Update',
-    message: 'Your order is out for delivery and will arrive today between 2-5 PM.',
-    time: '1 week ago',
-    read: true
-  },
-  {
-    id: 8,
-    type: 'system',
-    title: 'Wishlist Item Back in Stock',
-    message: 'Good news! The Premium Cotton Jacket from your wishlist is now back in stock.',
-    time: '2 weeks ago',
-    read: true
-  }
-];
-
 export function Notifications() {
+  const [notifications, setNotifications] = useState<Notification[]>(getNotifications());
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
@@ -134,7 +70,14 @@ export function Notifications() {
                 )}
               </p>
             </div>
-            <Button variant="outline" className="border-[#B7885E]/20 text-[#3B2C24]">
+            <Button
+              variant="outline"
+              className="border-[#B7885E]/20 text-[#3B2C24]"
+              onClick={() => {
+                markAllNotificationsRead();
+                setNotifications(getNotifications());
+              }}
+            >
               <Check className="w-4 h-4 mr-2" />
               Mark All as Read
             </Button>
@@ -213,6 +156,10 @@ export function Notifications() {
                           variant="ghost"
                           size="sm"
                           className="text-[#8B7355] hover:text-[#3B2C24] hover:bg-[#FFF5E6] h-8 px-3"
+                        onClick={() => {
+                          markNotificationRead(notification.id);
+                          setNotifications(getNotifications());
+                        }}
                         >
                           Mark as Read
                         </Button>
