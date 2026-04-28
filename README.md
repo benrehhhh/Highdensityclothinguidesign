@@ -31,35 +31,6 @@ The Vite dev server is already running. View the preview in your browser.
 
 ---
 
-## 📊 Project Stats
-
-- **Page Files:** 22
-- **UI Components:** 14 (cleaned from 46)
-- **Layout Components:** 3
-- **Total Component Files:** 18
-
----
-
-## 🗂️ File Structure
-
-```
-src/app/
-├── components/
-│   ├── ui/                  (14 active components)
-│   ├── figma/              (Image components)
-│   ├── admin-layout.tsx
-│   ├── customer-layout.tsx
-│   └── map-wrapper.tsx
-├── pages/
-│   ├── customer/           (11 customer pages)
-│   ├── auth/               (registration)
-│   └── [admin pages]       (8 admin pages)
-├── App.tsx
-└── routes.ts
-```
-
----
-
 ## ✨ Features
 
 ### Customer Side
@@ -91,6 +62,9 @@ src/app/
 - **Radix UI** for accessible components
 - **Sonner** for toast notifications
 - **localStorage** for data persistence
+- **Node.js**
+- **Express**
+- **SQLite**
 
 ---
 
@@ -129,27 +103,3 @@ src/app/
 
 **Admin Panel:** Professional gray/black/white theme  
 **Customer Interface:** Brown/tan clothing retail aesthetic (`#B7885E`, `#3B2C24`)
-
----
-
-## 📝 Recent Updates (April 20, 2026)
-
-1. ✅ Added comprehensive admin settings page
-2. ✅ Removed 32 unused UI components
-3. ✅ Created detailed documentation
-4. ✅ Cleaned up unused files
-5. ✅ Updated admin navigation with Settings link
-
----
-
-## 📖 Need Help?
-
-- See **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** for detailed file and feature documentation
-- See **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** for recent changes and cleanup details
-- Check `src/app/routes.ts` for all available routes
-- Check `src/app/components/ui/` for available UI components
-
----
-
-**Status:** ✅ Production Ready  
-**Last Updated:** April 20, 2026
