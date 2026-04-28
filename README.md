@@ -8,13 +8,17 @@ A comprehensive GPS-based delivery tracking and e-commerce management system wit
 
 ### Install Dependencies
 ```bash
+npm install express cors
+npm install sqlite3
 npm install
-npm run backend
-npm run dev
 ```
 
 
 ### Run Development Server
+```bash
+npm run backend
+npm run dev
+```
 The Vite dev server is already running. View the preview in your browser.
 
 ### Login Credentials
