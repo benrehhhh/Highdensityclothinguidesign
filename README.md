@@ -4,32 +4,15 @@ A comprehensive GPS-based delivery tracking and e-commerce management system wit
 
 ---
 
-## 📚 Documentation Files
-
-### 📖 **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**
-Complete project overview including:
-- All page files and their routes
-- UI component usage mapping
-- Feature summary
-- Authentication details
-- GPS tracking implementation
-- Design specifications
-
-### 🧹 **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)**
-Recent cleanup details:
-- Files removed (32 unused UI components)
-- New admin settings feature
-- Before/after comparison
-- Current project structure
-
----
-
 ## 🚀 Quick Start
 
 ### Install Dependencies
 ```bash
 npm install
+npm run backend
+npm run dev
 ```
+
 
 ### Run Development Server
 The Vite dev server is already running. View the preview in your browser.
