@@ -16,8 +16,7 @@ npm install
 
 ### Run Development Server
 ```bash
-npm run backend
-npm run dev
+npm run start
 ```
 The Vite dev server is already running. View the preview in your browser.
 
