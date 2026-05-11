@@ -26,7 +26,11 @@ export function Notifications() {
 
   useEffect(() => {
     initStore().catch(() => undefined);
-    return subscribeStore(() => setNotifications(getNotifications()));
+    setNotifications(getNotifications());
+    
+    subscribeStore(() => {
+      setNotifications(getNotifications());
+    });
   }, []);
 
   const getNotificationIcon = (type: string) => {
@@ -98,28 +102,48 @@ export function Notifications() {
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2">
               <Button
-                variant="outline"
+                variant={activeFilter === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveFilter("all")}
-                className={`border-[#B7885E]/20 ${activeFilter === "all" ? "bg-[#B7885E] text-white hover:bg-[#9d7350] hover:text-white" : "text-[#3B2C24]"}`}
+                className={activeFilter === "all" ? "bg-[#B7885E] text-white hover:bg-[#9d7350]" : "border-[#B7885E]/20 text-[#3B2C24] hover:bg-[#FFF5E6]/50"}
               >
-                All
+                All ({notifications.length})
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveFilter("order")} className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button 
+                variant={activeFilter === "order" ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setActiveFilter("order")} 
+                className={activeFilter === "order" ? "bg-blue-600 text-white hover:bg-blue-700" : "border-[#B7885E]/20 text-[#3B2C24] hover:bg-blue-50"}
+              >
                 <Package className="w-4 h-4 mr-1" />
-                Orders
+                Orders ({notifications.filter(n => n.type === 'order').length})
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveFilter("promo")} className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button 
+                variant={activeFilter === "promo" ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setActiveFilter("promo")} 
+                className={activeFilter === "promo" ? "bg-purple-600 text-white hover:bg-purple-700" : "border-[#B7885E]/20 text-[#3B2C24] hover:bg-purple-50"}
+              >
                 <Gift className="w-4 h-4 mr-1" />
-                Promotions
+                Promotions ({notifications.filter(n => n.type === 'promo').length})
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveFilter("delivery")} className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button 
+                variant={activeFilter === "delivery" ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setActiveFilter("delivery")} 
+                className={activeFilter === "delivery" ? "bg-green-600 text-white hover:bg-green-700" : "border-[#B7885E]/20 text-[#3B2C24] hover:bg-green-50"}
+              >
                 <TrendingUp className="w-4 h-4 mr-1" />
-                Delivery
+                Delivery ({notifications.filter(n => n.type === 'delivery').length})
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveFilter("system")} className="border-[#B7885E]/20 text-[#3B2C24]">
+              <Button 
+                variant={activeFilter === "system" ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setActiveFilter("system")} 
+                className={activeFilter === "system" ? "bg-orange-600 text-white hover:bg-orange-700" : "border-[#B7885E]/20 text-[#3B2C24] hover:bg-orange-50"}
+              >
                 <AlertCircle className="w-4 h-4 mr-1" />
-                System
+                System ({notifications.filter(n => n.type === 'system').length})
               </Button>
             </div>
           </CardContent>

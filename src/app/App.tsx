@@ -1,7 +1,8 @@
-import { RouterProvider } from 'react-router';
+import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { useEffect } from 'react';
 import { initStore } from './lib/data-store';
+import { ErrorBoundary } from './components/error-boundary';
 
 export default function App() {
   useEffect(() => {
@@ -9,8 +10,8 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <RouterProvider router={router} />
-    </>
+    </ErrorBoundary>
   );
 }

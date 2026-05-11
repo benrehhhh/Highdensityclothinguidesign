@@ -4,10 +4,7 @@ import {
   Search,
   Edit,
   Trash2,
-  Eye,
-  Upload,
   Image as ImageIcon,
-  Download,
   Filter
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
@@ -40,176 +37,216 @@ interface Product {
   name: string;
   category: string;
   price: number;
-  discount: number;
+  originalPrice: number;
   stock: number;
   sizes: string[];
   colors: string[];
-  images: string[];
+  image: string;
   description: string;
+  materials: string;
+  care: string;
   status: 'Active' | 'Draft' | 'Out of Stock';
 }
 
-const categories = ['Men', 'Women', 'Kids', 'Accessories'];
+const genders = ['Men', 'Women', 'Kids', 'Unisex'];
+const clothingTypes = ['Tops', 'Outerwear', 'Bottoms', 'Accessories'];
+const categories = ['Men', 'Women', 'Kids', 'Unisex', 'Tops', 'Outerwear', 'Bottoms', 'Accessories'];
+
+const sizesByClothingType: Record<string, string[]> = {
+  'Tops': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+  'Outerwear': ['S', 'M', 'L', 'XL', 'XXL'],
+  'Bottoms': ['28', '30', '32', '34', '36', '38'],
+  'Accessories': ['One Size']
+};
+
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const colors = [
   { name: 'Black', hex: '#000000' },
   { name: 'White', hex: '#FFFFFF' },
-  { name: 'Navy', hex: '#001f3f' },
-  { name: 'Gray', hex: '#808080' },
-  { name: 'Red', hex: '#FF0000' },
-  { name: 'Blue', hex: '#0074D9' },
-  { name: 'Green', hex: '#2ECC40' },
+  { name: 'Beige', hex: '#F5F5DC' },
   { name: 'Brown', hex: '#8B4513' },
-];
-
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Classic Cotton T-Shirt',
-    category: 'Men',
-    price: 1299,
-    discount: 10,
-    stock: 50,
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Black', 'White', 'Navy'],
-    images: [],
-    description: 'Comfortable cotton t-shirt perfect for everyday wear',
-    status: 'Active'
-  },
-  {
-    id: '2',
-    name: 'Linen Summer Dress',
-    category: 'Women',
-    price: 2499,
-    discount: 0,
-    stock: 30,
-    sizes: ['S', 'M', 'L'],
-    colors: ['White', 'Blue'],
-    images: [],
-    description: 'Lightweight linen dress for summer',
-    status: 'Active'
-  },
-  {
-    id: '3',
-    name: 'Kids Hoodie',
-    category: 'Kids',
-    price: 899,
-    discount: 15,
-    stock: 0,
-    sizes: ['XS', 'S', 'M'],
-    colors: ['Gray', 'Navy', 'Red'],
-    images: [],
-    description: 'Warm and cozy hoodie for kids',
-    status: 'Out of Stock'
-  },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Cream', hex: '#FFFDD0' }
 ];
 
 export function Products() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const [productForm, setProductForm] = useState({
     name: '',
-    category: '',
+    gender: '',
+    clothingType: '',
     price: '',
-    discount: '0',
     stock: '',
     sizes: [] as string[],
     colors: [] as string[],
     description: '',
+    materials: '',
+    care: '',
+    image: '',
+    imageFile: null as File | null,
     status: 'Active' as 'Active' | 'Draft' | 'Out of Stock'
   });
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'All' || product.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
+  const refreshProductsList = async () => {
+    try {
+      const items = await adminApi.getProducts();
+      const mappedItems = items.map((item) => ({ 
+        ...item, 
+        id: String(item.id), 
+        status: item.stock > 0 ? (item.status || "Active") : "Out of Stock"
+      }));
+      setProducts(mappedItems);
+      
+      // Sync to localStorage
+      localStorage.setItem('products', JSON.stringify(mappedItems));
+    } catch (error) {
+      console.error("Failed to refresh products:", error);
+    }
+  };
+
   useEffect(() => {
-    adminApi.getProducts().then((items) => {
-      setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
-    }).catch(() => undefined);
+    refreshProductsList();
   }, []);
 
   const handleAddProduct = async () => {
-    if (!productForm.name || !productForm.category || !productForm.price || !productForm.stock) {
+    if (!productForm.name || !productForm.gender || !productForm.clothingType || !productForm.price || !productForm.stock) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const newProduct: Product = {
-      id: Date.now().toString(),
-      name: productForm.name,
-      category: productForm.category,
-      price: parseFloat(productForm.price),
-      discount: parseFloat(productForm.discount),
-      stock: parseInt(productForm.stock),
-      sizes: productForm.sizes,
-      colors: productForm.colors,
-      images: [],
-      description: productForm.description,
-      status: productForm.status
-    };
+    try {
+      const payload = {
+        ...productForm,
+        category: `${productForm.gender} - ${productForm.clothingType}`,
+        price: parseFloat(productForm.price),
+        originalPrice: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock),
+      };
 
-    await adminApi.createProduct({
-      ...newProduct,
-      inStock: newProduct.stock > 0,
-      image: newProduct.images[0] || ""
-    });
-    const items = await adminApi.getProducts();
-    setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
-    setIsAddDialogOpen(false);
-    resetForm();
-    toast.success('Product added successfully');
+      const newProduct = await adminApi.createProduct(payload);
+      
+      // Sync to localStorage
+      const existingProducts = JSON.parse(localStorage.getItem('products') || '[]');
+      existingProducts.push(newProduct);
+      localStorage.setItem('products', JSON.stringify(existingProducts));
+      
+      await refreshProductsList();
+      setIsAddDialogOpen(false);
+      resetForm();
+      toast.success('Product added successfully');
+    } catch (error) {
+      toast.error('Failed to add product');
+    }
   };
 
   const handleEditProduct = async () => {
     if (!selectedProduct) return;
 
-    await adminApi.updateProduct(selectedProduct.id, {
-      name: productForm.name,
-      category: productForm.category,
-      price: parseFloat(productForm.price),
-      stock: parseInt(productForm.stock),
-      sizes: productForm.sizes,
-      colors: productForm.colors,
-      description: productForm.description,
-      badge: null,
-      inStock: parseInt(productForm.stock) > 0,
-      image: selectedProduct.images?.[0] || ""
-    });
-    const items = await adminApi.getProducts();
-    setProducts(items.map((item) => ({ ...item, id: String(item.id), status: item.stock > 0 ? "Active" : "Out of Stock" })));
-    setIsEditDialogOpen(false);
-    setSelectedProduct(null);
-    resetForm();
-    toast.success('Product updated successfully');
+    try {
+      const payload = {
+        ...productForm,
+        category: `${productForm.gender} - ${productForm.clothingType}`,
+        price: parseFloat(productForm.price),
+        originalPrice: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock),
+      };
+
+      const updatedProduct = await adminApi.updateProduct(selectedProduct.id, payload);
+      
+      // Sync to localStorage
+      const existingProducts = JSON.parse(localStorage.getItem('products') || '[]');
+      const index = existingProducts.findIndex((p: any) => p.id === selectedProduct.id);
+      if (index !== -1) {
+        existingProducts[index] = updatedProduct;
+        localStorage.setItem('products', JSON.stringify(existingProducts));
+      }
+      
+      await refreshProductsList();
+      setIsEditDialogOpen(false);
+      setSelectedProduct(null);
+      resetForm();
+      toast.success('Product updated successfully');
+    } catch (error) {
+      toast.error('Failed to update product');
+    }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    await adminApi.deleteProduct(id);
-    setProducts(products.filter(p => p.id !== id));
-    toast.success('Product deleted successfully');
+    const product = products.find(p => p.id === id);
+    if (product) {
+      setSelectedProduct(product);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!selectedProduct) return;
+    
+    try {
+      await adminApi.deleteProduct(selectedProduct.id);
+      
+      // Sync to localStorage
+      const existingProducts = JSON.parse(localStorage.getItem('products') || '[]');
+      const filteredProducts = existingProducts.filter((p: any) => p.id !== selectedProduct.id);
+      localStorage.setItem('products', JSON.stringify(filteredProducts));
+      
+      await refreshProductsList();
+      toast.success('Product deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      toast.error('Failed to delete product');
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: 'Active' | 'Draft' | 'Out of Stock') => {
+    try {
+      await adminApi.updateProduct(id, { status });
+      
+      // Sync to localStorage
+      const existingProducts = JSON.parse(localStorage.getItem('products') || '[]');
+      const index = existingProducts.findIndex((p: any) => p.id === id);
+      if (index !== -1) {
+        existingProducts[index].status = status;
+        localStorage.setItem('products', JSON.stringify(existingProducts));
+      }
+      
+      await refreshProductsList();
+      toast.success('Product status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update product status');
+    }
   };
 
   const openEditDialog = (product: Product) => {
+    const categoryParts = product.category?.split(' - ') || ['', ''];
     setSelectedProduct(product);
     setProductForm({
       name: product.name,
-      category: product.category,
+      gender: categoryParts[0] || '',
+      clothingType: categoryParts[1] || '',
       price: product.price.toString(),
-      discount: product.discount.toString(),
-      stock: product.stock.toString(),
-      sizes: product.sizes,
-      colors: product.colors,
-      description: product.description,
+      stock: (product.stock || 0).toString(),
+      sizes: product.sizes || [],
+      colors: product.colors || [],
+      description: product.description || '',
+      materials: product.materials || '',
+      care: product.care || '',
+      image: product.image || '',
+      imageFile: null,
       status: product.status
     });
     setIsEditDialogOpen(true);
@@ -218,13 +255,17 @@ export function Products() {
   const resetForm = () => {
     setProductForm({
       name: '',
-      category: '',
+      gender: '',
+      clothingType: '',
       price: '',
-      discount: '0',
       stock: '',
       sizes: [],
       colors: [],
       description: '',
+      materials: '',
+      care: '',
+      image: '',
+      imageFile: null,
       status: 'Active'
     });
   };
@@ -247,32 +288,12 @@ export function Products() {
     }));
   };
 
-  const handleBulkUpload = () => {
-    toast.success('CSV uploaded and products imported successfully');
-    setIsBulkUploadOpen(false);
-  };
-
-  const downloadCSVTemplate = () => {
-    const csv = 'Name,Category,Price,Discount,Stock,Sizes,Colors,Description,Status\nSample Product,Men,1299,10,50,"S,M,L","Black,White",Description here,Active';
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'product-template.csv';
-    a.click();
-    toast.success('Template downloaded');
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-700 border-green-300';
-      case 'Draft':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      case 'Out of Stock':
-        return 'bg-red-100 text-red-700 border-red-300';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+      case 'Active': return 'bg-green-100 text-green-700';
+      case 'Draft': return 'bg-gray-100 text-gray-700';
+      case 'Out of Stock': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -282,112 +303,41 @@ export function Products() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">Product Management</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your product catalog, pricing, and inventory
-          </p>
+          <p className="text-gray-600 mt-1">Manage your handcrafted product catalog</p>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setIsBulkUploadOpen(true)}
-            className="border-gray-300 text-gray-900 hover:bg-gray-50"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Bulk Upload
-          </Button>
-          <Button
-            onClick={() => setIsAddDialogOpen(true)}
-            className="bg-gray-900 hover:bg-gray-800 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6">
-        <Card className="border-gray-200 bg-white shadow-sm">
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-gray-600">Total Products</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-1">{products.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 bg-white shadow-sm">
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-gray-600">Active Products</p>
-              <p className="text-3xl font-semibold text-green-600 mt-1">
-                {products.filter(p => p.status === 'Active').length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 bg-white shadow-sm">
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-gray-600">Out of Stock</p>
-              <p className="text-3xl font-semibold text-red-600 mt-1">
-                {products.filter(p => p.status === 'Out of Stock').length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 bg-white shadow-sm">
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-gray-600">Total Value</p>
-              <p className="text-3xl font-semibold text-gray-900 mt-1">
-                ₱{products.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Button onClick={() => setIsAddDialogOpen(true)} className="bg-[#B7885E] hover:bg-[#9d7350] text-white">
+          <Plus className="w-4 h-4 mr-2" /> Add Product
+        </Button>
       </div>
 
       {/* Filters */}
       <Card className="border-gray-200 bg-white shadow-sm">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-300"
-              />
-            </div>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full md:w-48 border-gray-300">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Categories</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="pt-6 flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border-gray-300"
+            />
           </div>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-48 border-gray-300">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Categories</SelectItem>
+              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
       {/* Products Table */}
       <Card className="border-gray-200 bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-900">Products ({filteredProducts.length})</CardTitle>
-          <CardDescription className="text-gray-600">
-            Manage product details, pricing, and availability
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -404,54 +354,40 @@ export function Products() {
                 {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {product.sizes.join(', ')} • {product.colors.length} colors
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className="border-gray-300 text-gray-700">
-                        {product.category}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium text-gray-900">₱{product.price.toLocaleString()}</p>
-                        {product.discount > 0 && (
-                          <p className="text-sm text-green-600">{product.discount}% off</p>
+                      <div className="flex items-center gap-3">
+                        {product.image ? (
+                          <img src={product.image} className="w-10 h-10 object-cover rounded-md bg-gray-100" alt="" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                        ) : (
+                          <div className="w-10 h-10 object-cover rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">No Image</div>
                         )}
+                        <div>
+                          <p className="font-medium text-gray-900">{product.name}</p>
+                          <p className="text-xs text-gray-500">{product.sizes.join(', ')}</p>
+                        </div>
                       </div>
                     </td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{product.category}</td>
+                    <td className="py-3 px-4 text-sm font-medium">₱{product.price.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{product.stock} units</td>
                     <td className="py-3 px-4">
-                      <span className={product.stock > 10 ? 'text-gray-900' : 'text-red-600'}>
-                        {product.stock} units
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge className={`${getStatusColor(product.status)} border`}>
-                        {product.status}
-                      </Badge>
+                      <Select 
+                        value={product.status} 
+                        onValueChange={(value: 'Active' | 'Draft' | 'Out of Stock') => handleStatusChange(product.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Draft">Draft</SelectItem>
+                          <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(product)}
-                          className="border-gray-300 text-gray-900"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openEditDialog(product)}><Edit className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)} className="text-red-600 border-red-200 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </td>
                   </tr>
@@ -464,238 +400,100 @@ export function Products() {
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsAddDialogOpen(false);
-          setIsEditDialogOpen(false);
-          setSelectedProduct(null);
-          resetForm();
-        }
+        if (!open) { setIsAddDialogOpen(false); setIsEditDialogOpen(false); setSelectedProduct(null); resetForm(); }
       }}>
         <DialogContent className="bg-white max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-gray-900">
-              {isAddDialogOpen ? 'Add New Product' : 'Edit Product'}
-            </DialogTitle>
-            <DialogDescription className="text-gray-600">
-              {isAddDialogOpen ? 'Create a new product listing' : 'Update product information'}
-            </DialogDescription>
+            <DialogTitle>{isAddDialogOpen ? 'Add New Product' : 'Edit Product'}</DialogTitle>
           </DialogHeader>
-
           <div className="space-y-6 py-4">
-            {/* Basic Info */}
+            <div className="space-y-2">
+              <Label>Product Image *</Label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setProductForm({ ...productForm, imageFile: file });
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setProductForm(prev => ({ ...prev, image: reader.result as string }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                />
+                {productForm.image && (
+                  <img src={productForm.image} alt="Preview" className="w-24 h-24 object-cover rounded-md border" />
+                )}
+              </div>
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-900">Product Name *</Label>
-                <Input
-                  placeholder="e.g., Cotton T-Shirt"
-                  value={productForm.name}
-                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                  className="border-gray-300"
-                />
+                <Label>Product Name *</Label>
+                <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} />
               </div>
-
               <div className="space-y-2">
-                <Label className="text-gray-900">Category *</Label>
-                <Select value={productForm.category} onValueChange={(v) => setProductForm({ ...productForm, category: v })}>
-                  <SelectTrigger className="border-gray-300">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Label>Gender *</Label>
+                <Select value={productForm.gender} onValueChange={(v) => setProductForm({ ...productForm, gender: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                  <SelectContent>{genders.map((g: string) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Pricing */}
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-gray-900">Price (₱) *</Label>
-                <Input
-                  type="number"
-                  placeholder="1299"
-                  value={productForm.price}
-                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                  className="border-gray-300"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-900">Discount (%)</Label>
-                <Input
-                  type="number"
-                  placeholder="10"
-                  value={productForm.discount}
-                  onChange={(e) => setProductForm({ ...productForm, discount: e.target.value })}
-                  className="border-gray-300"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-900">Stock *</Label>
-                <Input
-                  type="number"
-                  placeholder="50"
-                  value={productForm.stock}
-                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                  className="border-gray-300"
-                />
-              </div>
-            </div>
-
-            <Separator className="bg-gray-200" />
-
-            {/* Sizes */}
             <div className="space-y-2">
-              <Label className="text-gray-900">Available Sizes</Label>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map(size => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    className={`px-4 py-2 rounded-lg border transition-colors ${
-                      productForm.sizes.includes(size)
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Colors */}
-            <div className="space-y-2">
-              <Label className="text-gray-900">Available Colors</Label>
-              <div className="grid grid-cols-4 gap-3">
-                {colors.map(color => (
-                  <button
-                    key={color.name}
-                    type="button"
-                    onClick={() => toggleColor(color.name)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
-                      productForm.colors.includes(color.name)
-                        ? 'bg-gray-100 border-gray-900'
-                        : 'bg-white border-gray-300 hover:border-gray-900'
-                    }`}
-                  >
-                    <div
-                      className="w-5 h-5 rounded-full border-2 border-gray-300"
-                      style={{ backgroundColor: color.hex }}
-                    />
-                    <span className="text-sm text-gray-900">{color.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Separator className="bg-gray-200" />
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label className="text-gray-900">Description</Label>
-              <Textarea
-                placeholder="Product description..."
-                value={productForm.description}
-                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                className="border-gray-300 resize-none"
-                rows={4}
-              />
-            </div>
-
-            {/* Images */}
-            <div className="space-y-2">
-              <Label className="text-gray-900">Product Images</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
-                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                <p className="text-xs text-gray-500">PNG, JPG up to 10MB (Multiple images supported)</p>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <Label className="text-gray-900">Status</Label>
-              <Select value={productForm.status} onValueChange={(v: any) => setProductForm({ ...productForm, status: v })}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Out of Stock">Out of Stock</SelectItem>
-                </SelectContent>
+              <Label>Clothing Type *</Label>
+              <Select value={productForm.clothingType} onValueChange={(v) => setProductForm({ ...productForm, clothingType: v, sizes: [] })}>
+                <SelectTrigger><SelectValue placeholder="Select clothing type" /></SelectTrigger>
+                <SelectContent>{clothingTypes.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Price (₱) *</Label><Input type="number" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Stock *</Label><Input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} /></div>
+            </div>
+            <div className="space-y-2">
+              <Label>Sizes</Label>
+              <div className="flex flex-wrap gap-2">
+                {(sizesByClothingType[productForm.clothingType] || sizes).map(size => (
+                  <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${productForm.sizes.includes(size) ? 'bg-gray-900 text-white' : 'bg-white hover:border-gray-900'}`}>{size}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Colors</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {colors.map(color => (
+                  <button key={color.name} type="button" onClick={() => toggleColor(color.name)} className={`flex items-center gap-2 px-2 py-1.5 rounded-md border text-xs transition-colors ${productForm.colors.includes(color.name) ? 'border-gray-900 bg-gray-50' : 'bg-white hover:border-gray-900'}`}>
+                    <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: color.hex }} /> {color.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2"><Label>Description</Label><Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} rows={3} /></div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsAddDialogOpen(false);
-              setIsEditDialogOpen(false);
-              resetForm();
-            }} className="border-gray-300">
-              Cancel
-            </Button>
-            <Button
-              onClick={isAddDialogOpen ? handleAddProduct : handleEditProduct}
-              className="bg-gray-900 hover:bg-gray-800 text-white"
-            >
-              {isAddDialogOpen ? 'Add Product' : 'Update Product'}
-            </Button>
+            <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setIsEditDialogOpen(false); resetForm(); }}>Cancel</Button>
+            <Button onClick={isAddDialogOpen ? handleAddProduct : handleEditProduct} className="bg-gray-900 text-white">{isAddDialogOpen ? 'Add Product' : 'Update Product'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Upload Dialog */}
-      <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+      {/* Delete Product Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="bg-white">
           <DialogHeader>
-            <DialogTitle className="text-gray-900">Bulk Upload Products</DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Upload multiple products using CSV file
-            </DialogDescription>
+            <DialogTitle>Delete Product</DialogTitle>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800 mb-2">
-                <strong>Instructions:</strong>
-              </p>
-              <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
-                <li>Download the CSV template</li>
-                <li>Fill in your product data</li>
-                <li>Upload the completed CSV file</li>
-              </ol>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={downloadCSVTemplate}
-              className="w-full border-gray-300"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download CSV Template
-            </Button>
-
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-600 mb-1">Click to upload CSV file</p>
-              <p className="text-xs text-gray-500">CSV files only, max 5MB</p>
-            </div>
+          <div className="py-4">
+            <p>Are you sure you want to delete <strong>{selectedProduct?.name}</strong>? This action cannot be undone.</p>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBulkUploadOpen(false)} className="border-gray-300">
-              Cancel
-            </Button>
-            <Button onClick={handleBulkUpload} className="bg-gray-900 hover:bg-gray-800 text-white">
-              Upload Products
-            </Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button className="bg-red-500 text-white hover:bg-red-600" onClick={confirmDeleteProduct}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

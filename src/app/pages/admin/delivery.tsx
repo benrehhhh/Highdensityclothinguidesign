@@ -11,7 +11,8 @@ import {
   Plus,
   Navigation,
   Phone,
-  User as UserIcon
+  User as UserIcon,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -38,7 +39,7 @@ import { toast } from 'sonner';
 import { MapWrapper, riderIcon, warehouseIcon } from '../../components/map-wrapper';
 import { adminApi } from '../../lib/admin-api';
 
-type OrderStatus = 'Order Placed' | 'Processing' | 'Out for Delivery' | 'Delivered';
+type OrderStatus = 'Order Placed' | 'Pending Confirmation' | 'Processing' | 'Out for Delivery' | 'Delivered';
 
 interface DeliveryOrder {
   id: string;
@@ -59,12 +60,16 @@ interface DeliveryOrder {
     coordinates: [number, number];
     status: string;
   }[];
+  total?: number;
+  paymentMethod?: string;
 }
 
 const statusSteps: OrderStatus[] = ['Order Placed', 'Processing', 'Out for Delivery', 'Delivered'];
 
 export function Delivery() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+  const [orderSort, setOrderSort] = useState<'newest' | 'oldest'>('newest');
   const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
@@ -80,76 +85,65 @@ export function Delivery() {
     trackingNumber: ''
   });
 
-  // Mock delivery orders
-  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([
-    {
-      id: '1',
-      orderId: 'ORD-001',
-      customer: 'Maria Santos',
-      address: 'Quezon City, Metro Manila',
-      items: 'Cotton Shirt (x2)',
-      trackingNumber: 'TRK123456789PH',
-      status: 'Out for Delivery',
-      placedDate: '2026-04-12',
-      estimatedDelivery: '2026-04-14',
-      courier: 'J&T Express',
-      riderName: 'Juan Santos',
-      riderContact: '0917-123-4567',
-      location: [14.6091, 121.0223],
-      deliveryLogs: [
-        { timestamp: '2026-04-14 09:00 AM', coordinates: [14.5995, 120.9842], status: 'Picked up from warehouse' },
-        { timestamp: '2026-04-14 09:30 AM', coordinates: [14.6040, 121.0000], status: 'In transit' },
-        { timestamp: '2026-04-14 10:00 AM', coordinates: [14.6091, 121.0223], status: 'Approaching destination' }
-      ]
-    },
-    {
-      id: '2',
-      orderId: 'ORD-002',
-      customer: 'Juan Dela Cruz',
-      address: 'Makati City, Metro Manila',
-      items: 'Linen Polo (x1)',
-      trackingNumber: 'TRK987654321PH',
-      status: 'Processing',
-      placedDate: '2026-04-13',
-      estimatedDelivery: '2026-04-15',
-      courier: 'LBC',
-      riderName: 'Pedro Reyes',
-      riderContact: '0917-234-5678',
-      location: [14.5547, 121.0244]
-    },
-    {
-      id: '3',
-      orderId: 'ORD-003',
-      customer: 'Ana Reyes',
-      address: 'Pasig City, Metro Manila',
-      items: 'Cotton Shirt (x1), Linen Polo (x2)',
-      trackingNumber: '',
-      status: 'Order Placed',
-      placedDate: '2026-04-14',
-      estimatedDelivery: '2026-04-16'
-    },
-    {
-      id: '4',
-      orderId: 'ORD-004',
-      customer: 'Pedro Garcia',
-      address: 'Taguig City, Metro Manila',
-      items: 'Premium Jacket (x1)',
-      trackingNumber: 'TRK456789123PH',
-      status: 'Delivered',
-      placedDate: '2026-04-10',
-      estimatedDelivery: '2026-04-12',
-      courier: 'J&T Express',
-      riderName: 'Carlos Tan',
-      riderContact: '0917-345-6789',
-      location: [14.5176, 121.0509]
-    },
-    ]);
+  // Status update form
+  const [statusDescription, setStatusDescription] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null);
 
-  const filteredOrders = deliveryOrders.filter(order =>
-    order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Rejection reason form
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectingOrder, setRejectingOrder] = useState<DeliveryOrder | null>(null);
+
+  // Load real user orders from localStorage
+  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = () => {
+    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    const mappedOrders: DeliveryOrder[] = userOrders.map((order: any) => ({
+      id: order.id.toString(),
+      orderId: `#${order.id}`,
+      customer: order.customer?.name || 'Unknown',
+      address: order.shippingAddress || 'No address provided',
+      items: order.items?.map((item: any) => `${item.name} (x${item.quantity})`).join(', ') || 'No items',
+      trackingNumber: order.trackingNumber || '',
+      status: order.status === 'Pending Confirmation' ? 'Pending Confirmation' :
+              order.status === 'Processing' ? 'Processing' :
+              order.status === 'Delivered' ? 'Delivered' :
+              order.status === 'Out for Delivery' ? 'Out for Delivery' :
+              order.status === 'Order Placed' ? 'Order Placed' : 'Pending Confirmation',
+      placedDate: new Date(order.date).toLocaleDateString(),
+      estimatedDelivery: new Date(new Date(order.date).getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      courier: order.courier || '',
+      riderName: order.riderName || '',
+      riderContact: order.riderContact || '',
+      location: order.status === 'Out for Delivery' ? [14.6091, 121.0223] : undefined,
+      deliveryLogs: order.status === 'Out for Delivery' ? [
+        { timestamp: new Date().toLocaleString(), coordinates: [14.5995, 120.9842], status: 'Picked up from warehouse' }
+      ] : [],
+      total: order.total,
+      paymentMethod: order.paymentMethod
+    }));
+    setDeliveryOrders(mappedOrders);
+  };
+
+  const filteredOrders = deliveryOrders
+    .filter(order =>
+      (statusFilter === 'all' || order.status === statusFilter) &&
+      (order.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.trackingNumber?.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      // Use the original order ID (timestamp) for sorting instead of formatted date
+      const dateA = parseInt(a.id) || 0;
+      const dateB = parseInt(b.id) || 0;
+      if (orderSort === 'newest') return dateB - dateA;
+      return dateA - dateB;
+    });
 
   const activeDeliveries = deliveryOrders.filter(o => o.status === 'Out for Delivery' && o.location);
 
@@ -157,6 +151,8 @@ export function Delivery() {
     switch (status) {
       case 'Order Placed':
         return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case 'Pending Confirmation':
+        return 'bg-orange-100 text-orange-700 border-orange-300';
       case 'Processing':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'Out for Delivery':
@@ -170,6 +166,8 @@ export function Delivery() {
     switch (status) {
       case 'Order Placed':
         return <Clock className="w-4 h-4" />;
+      case 'Pending Confirmation':
+        return <Clock className="w-4 h-4" />;
       case 'Processing':
         return <Package className="w-4 h-4" />;
       case 'Out for Delivery':
@@ -180,6 +178,7 @@ export function Delivery() {
   };
 
   const statusCounts = {
+    pendingConfirmation: deliveryOrders.filter(o => o.status === 'Pending Confirmation').length,
     placed: deliveryOrders.filter(o => o.status === 'Order Placed').length,
     processing: deliveryOrders.filter(o => o.status === 'Processing').length,
     outForDelivery: deliveryOrders.filter(o => o.status === 'Out for Delivery').length,
@@ -189,64 +188,188 @@ export function Delivery() {
   const handleAssignCourier = async () => {
     if (!assigningOrder) return;
 
-    const trackingNum = courierForm.trackingNumber || `TRK${Date.now()}PH`;
-
-    await adminApi.updateDelivery(assigningOrder.id, {
-      courier: courierForm.courier,
-      riderName: courierForm.riderName,
-      riderContact: courierForm.riderContact,
-      trackingNumber: trackingNum,
-      status: "Processing"
-    });
-
-    setDeliveryOrders(prev => prev.map(order =>
+    const updatedOrders = deliveryOrders.map(order =>
       order.id === assigningOrder.id
         ? {
             ...order,
             courier: courierForm.courier,
             riderName: courierForm.riderName,
             riderContact: courierForm.riderContact,
-            trackingNumber: trackingNum,
+            trackingNumber: courierForm.trackingNumber,
+            status: 'Processing' as OrderStatus
+          }
+        : order
+    );
+    setDeliveryOrders(updatedOrders);
+
+    // Update localStorage userOrders
+    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    const updatedUserOrders = userOrders.map((order: any) =>
+      order.id.toString() === assigningOrder.id
+        ? {
+            ...order,
+            courier: courierForm.courier,
+            riderName: courierForm.riderName,
+            riderContact: courierForm.riderContact,
+            trackingNumber: courierForm.trackingNumber,
             status: 'Processing'
           }
         : order
-    ));
+    );
+    localStorage.setItem('userOrders', JSON.stringify(updatedUserOrders));
 
     toast.success('Courier assigned successfully');
     setIsAssignDialogOpen(false);
     setCourierForm({ courier: '', riderName: '', riderContact: '', trackingNumber: '' });
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
-    await adminApi.updateDeliveryStatus(orderId, newStatus);
-    setDeliveryOrders(prev => prev.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    toast.success(`Order status updated to ${newStatus}`);
+  const handleUpdateStatus = () => {
+    if (!editingOrder) return;
+    
+    // If no status selected but description is provided, only send description
+    if (!selectedStatus && !statusDescription) return;
+    
+    if (selectedStatus) {
+      const updatedOrders = deliveryOrders.map(order =>
+        order.id === editingOrder.id ? { ...order, status: selectedStatus } : order
+      );
+      setDeliveryOrders(updatedOrders);
+
+      // Update localStorage userOrders
+      const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+      const updatedUserOrders = userOrders.map((order: any) =>
+        order.id.toString() === editingOrder.id.toString()
+          ? { ...order, status: selectedStatus }
+          : order
+      );
+      localStorage.setItem('userOrders', JSON.stringify(updatedUserOrders));
+    }
+
+    // Create notification for order status change or description
+    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+    if (selectedStatus && statusDescription) {
+      notifications.push({
+        id: Date.now(),
+        type: 'order',
+        title: `Order Status Updated`,
+        message: `Your order #${editingOrder.id} status has been updated to ${selectedStatus}: ${statusDescription}`,
+        time: new Date().toISOString(),
+        read: false
+      });
+    } else if (selectedStatus) {
+      notifications.push({
+        id: Date.now(),
+        type: 'order',
+        title: `Order Status Updated`,
+        message: `Your order #${editingOrder.id} status has been updated to ${selectedStatus}`,
+        time: new Date().toISOString(),
+        read: false
+      });
+    } else if (statusDescription) {
+      notifications.push({
+        id: Date.now(),
+        type: 'order',
+        title: `Order Update`,
+        message: `Your order #${editingOrder.id}: ${statusDescription}`,
+        time: new Date().toISOString(),
+        read: false
+      });
+    }
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+
+    toast.success(selectedStatus ? `Order status updated to ${selectedStatus}` : 'Order update sent');
     setIsEditDialogOpen(false);
+    setStatusDescription('');
+    setSelectedStatus(null);
+  };
+
+  const handleConfirmOrder = (order: DeliveryOrder) => {
+    const updatedOrders = deliveryOrders.map(o =>
+      o.id === order.id ? { ...o, status: 'Order Placed' } : o
+    );
+    setDeliveryOrders(updatedOrders);
+
+    // Update localStorage userOrders
+    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    const updatedUserOrders = userOrders.map((o: any) =>
+      o.id.toString() === order.id.toString()
+        ? { ...o, status: 'Order Placed' }
+        : o
+    );
+    localStorage.setItem('userOrders', JSON.stringify(updatedUserOrders));
+
+    // Create notification for order confirmation
+    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+    notifications.push({
+      id: Date.now(),
+      type: 'order',
+      title: `Order Confirmed`,
+      message: `Your order #${order.id} has been confirmed`,
+      time: new Date().toISOString(),
+      read: false
+    });
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+
+    toast.success(`Order #${order.id} confirmed`);
+  };
+
+  const handleRejectOrder = (order: DeliveryOrder) => {
+    setRejectingOrder(order);
+    setRejectionReason('');
+    setIsRejectDialogOpen(true);
+  };
+
+  const confirmRejectOrder = () => {
+    if (!rejectingOrder) return;
+
+    const updatedOrders = deliveryOrders.map(o =>
+      o.id === rejectingOrder.id ? { ...o, status: 'Order Placed' as OrderStatus } : o
+    );
+    setDeliveryOrders(updatedOrders);
+
+    // Update localStorage userOrders
+    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    const updatedUserOrders = userOrders.map((o: any) =>
+      o.id.toString() === rejectingOrder.id.toString()
+        ? { ...o, status: 'Order Placed' }
+        : o
+    );
+    localStorage.setItem('userOrders', JSON.stringify(updatedUserOrders));
+
+    // Create notification for order rejection
+    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+    notifications.push({
+      id: Date.now(),
+      type: 'order',
+      title: `Order Rejected`,
+      message: rejectionReason 
+        ? `Your order #${rejectingOrder.id} could not be processed. Reason: ${rejectionReason}`
+        : `Your order #${rejectingOrder.id} could not be processed. Please contact support for details.`,
+      time: new Date().toISOString(),
+      read: false
+    });
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+
+    toast.success(`Order #${rejectingOrder.id} rejected`);
+    setIsRejectDialogOpen(false);
+    setRejectionReason('');
+    setRejectingOrder(null);
+  };
+
+  const handleDeleteDelivery = (id: string) => {
+    const updatedOrders = deliveryOrders.filter(order => order.id !== id);
+    setDeliveryOrders(updatedOrders);
+
+    // Update localStorage userOrders
+    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    const updatedUserOrders = userOrders.filter((order: any) => order.id.toString() !== id);
+    localStorage.setItem('userOrders', JSON.stringify(updatedUserOrders));
+
+    toast.success('Delivery order deleted successfully');
   };
 
   // Warehouse location
   const warehouseLocation: [number, number] = [14.5995, 120.9842];
-
-  useEffect(() => {
-    adminApi.getDelivery().then((rows) => {
-      setDeliveryOrders(rows.map((row: any) => ({
-        id: String(row.id),
-        orderId: row.order_id,
-        customer: row.customer,
-        address: row.address,
-        items: row.items,
-        trackingNumber: row.tracking_number || "",
-        status: row.status,
-        placedDate: row.placed_date,
-        estimatedDelivery: row.estimated_delivery,
-        courier: row.courier || undefined,
-        riderName: row.rider_name || undefined,
-        riderContact: row.rider_contact || undefined
-      })));
-    }).catch(() => undefined);
-  }, []);
 
   return (
     <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
@@ -277,7 +400,19 @@ export function Delivery() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-5 gap-6">
+        <Card className="border-gray-200 bg-white shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Pending Confirmation</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-1">{statusCounts.pendingConfirmation}</p>
+              </div>
+              <Clock className="w-12 h-12 text-orange-500 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-gray-200 bg-white shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -327,21 +462,6 @@ export function Delivery() {
         </Card>
       </div>
 
-      {/* Search */}
-      <Card className="border-gray-200 bg-white shadow-sm">
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="Search by order ID, customer name, or tracking number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-gray-300"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {viewMode === 'map' ? (
         /* Map View - Live GPS Feed */
         <Card className="border-gray-200 bg-white shadow-sm">
@@ -381,13 +501,55 @@ export function Delivery() {
         /* List View - Delivery Orders */
         <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-900">
-              <Truck className="w-5 h-5 text-gray-700" />
-              Delivery Orders
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} found
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="w-5 h-5 text-gray-700" />
+                <CardTitle className="text-gray-900">Delivery Orders</CardTitle>
+                <CardDescription className="text-gray-600 ml-2">
+                  ({filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''})
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by order ID, customer, or tracking number..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 border-gray-300 w-64"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                  <SelectTrigger className="border-gray-300 w-40">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Pending Confirmation">Pending Confirmation</SelectItem>
+                    <SelectItem value="Order Placed">Order Placed</SelectItem>
+                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
+                    <SelectItem value="Delivered">Delivered</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant={orderSort === 'newest' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setOrderSort('newest')}
+                  className={orderSort === 'newest' ? 'bg-gray-900 text-white' : ''}
+                >
+                  Newest
+                </Button>
+                <Button
+                  variant={orderSort === 'oldest' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setOrderSort('oldest')}
+                  className={orderSort === 'oldest' ? 'bg-gray-900 text-white' : ''}
+                >
+                  Oldest
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -433,50 +595,61 @@ export function Delivery() {
                           </div>
                         )}
                       </div>
-
-                      {/* Quick Status Update */}
-                      <div className="flex gap-2 mt-3">
-                        {statusSteps.map((status) => (
-                          <Button
-                            key={status}
-                            size="sm"
-                            variant={order.status === status ? 'default' : 'outline'}
-                            onClick={() => handleUpdateStatus(order.id, status)}
-                            className={order.status === status ? 'bg-gray-900 text-white' : 'border-gray-300 text-gray-700'}
-                          >
-                            {status}
-                          </Button>
-                        ))}
-                      </div>
                     </div>
 
                     <div className="flex gap-2 ml-4">
-                      {!order.trackingNumber && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setAssigningOrder(order);
-                            setIsAssignDialogOpen(true);
-                          }}
-                          className="border-gray-300 text-gray-900 hover:bg-gray-50"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Assign Courier
-                        </Button>
+                      {order.status === 'Pending Confirmation' ? (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleConfirmOrder(order)}
+                            className="bg-green-600 text-white hover:bg-green-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Confirm
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRejectOrder(order)}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Reject
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {order.status === 'Processing' && !order.trackingNumber && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setAssigningOrder(order);
+                                setIsAssignDialogOpen(true);
+                              }}
+                              className="border-gray-300 text-gray-900 hover:bg-gray-50"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Assign Courier
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingOrder(order);
+                              setStatusDescription('');
+                              setSelectedStatus(null);
+                              setIsEditDialogOpen(true);
+                            }}
+                            className="border-gray-300 text-gray-900 hover:bg-gray-50"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Update
+                          </Button>
+                        </>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingOrder(order);
-                          setIsEditDialogOpen(true);
-                        }}
-                        className="border-gray-300 text-gray-900 hover:bg-gray-50"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Update
-                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -714,16 +887,14 @@ export function Delivery() {
               <Separator className="bg-gray-200" />
 
               <div className="space-y-2">
-                <Label className="text-gray-900">Update Status To:</Label>
+                <Label className="text-gray-900">Update Status To (Optional):</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {statusSteps.map((status) => (
                     <Button
                       key={status}
-                      variant={editingOrder.status === status ? 'default' : 'outline'}
-                      onClick={() => {
-                        handleUpdateStatus(editingOrder.id, status);
-                      }}
-                      className={editingOrder.status === status
+                      variant={selectedStatus === status ? 'default' : 'outline'}
+                      onClick={() => setSelectedStatus(status)}
+                      className={selectedStatus === status
                         ? 'bg-gray-900 text-white'
                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                       }
@@ -733,6 +904,17 @@ export function Delivery() {
                     </Button>
                   ))}
                 </div>
+                <p className="text-xs text-gray-500 mt-1">Select a status to update, or leave blank to only send description</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-900">Status Description (Optional)</Label>
+                <textarea
+                  placeholder="Add details about the status update..."
+                  value={statusDescription}
+                  onChange={(e) => setStatusDescription(e.target.value)}
+                  className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-500"
+                />
               </div>
             </div>
           )}
@@ -740,10 +922,64 @@ export function Delivery() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setStatusDescription('');
+                setSelectedStatus(null);
+              }}
               className="border-gray-300"
             >
-              Close
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateStatus}
+              disabled={!selectedStatus && !statusDescription}
+              className="bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Send Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Order Dialog */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reject Order</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting order #{rejectingOrder?.id}. This is optional.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Rejection Reason (Optional)</Label>
+              <textarea
+                id="rejection-reason"
+                placeholder="e.g., Out of stock, payment failed, invalid address..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-500"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsRejectDialogOpen(false);
+                setRejectionReason('');
+                setRejectingOrder(null);
+              }}
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmRejectOrder}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              Reject Order
             </Button>
           </DialogFooter>
         </DialogContent>

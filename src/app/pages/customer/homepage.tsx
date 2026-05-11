@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Star, ShoppingBag, Heart, Sparkles, Package, Truck, UserCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -144,9 +144,11 @@ export function Homepage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
+              <Link to="/home/about">
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#3B2C24] text-[#676767]">
                 Learn More
               </Button>
+              </Link>
             </div>
           </div>
         </div>

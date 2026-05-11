@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Package, Truck, CheckCircle2, MapPin, Phone, Mail, Search, Clock, Navigation, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -7,16 +8,46 @@ import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { MapWrapper, riderIcon, destinationIcon, warehouseIcon } from '../../components/map-wrapper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 type OrderStatus = 'Order Placed' | 'Processing' | 'Out for Delivery' | 'Delivered';
 
 const trackingSteps: OrderStatus[] = ['Order Placed', 'Processing', 'Out for Delivery', 'Delivered'];
 
 export function OrderTracking() {
-  const [orderNumber, setOrderNumber] = useState('ORD-001');
+  const location = useLocation();
+  const urlOrderId = new URLSearchParams(location.search).get('orderId');
+  const [orderNumber, setOrderNumber] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+
+  // Load orders from localStorage
+  useEffect(() => {
+    const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    setUserOrders(orders);
+
+    // If no orders, set tracking data to null
+    if (orders.length === 0) {
+      setTrackingData(null);
+    }
+  }, []);
+
+  // Handle URL parameter changes separately
+  useEffect(() => {
+    // Check if orderId is in URL parameters
+    if (urlOrderId) {
+      const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+      const order = orders.find((o: any) => o.id === urlOrderId);
+      if (order) {
+        setSelectedOrderId(urlOrderId);
+        loadOrderTracking(order);
+        setOrderNumber(urlOrderId);
+      }
+    }
+  }, [location.search]);
 
   // Warehouse location (starting point)
   const warehouseLocation: [number, number] = [14.5995, 120.9842]; // Manila
@@ -27,7 +58,7 @@ export function OrderTracking() {
   // Simulated rider location (moves along route)
   const [riderLocation, setRiderLocation] = useState<[number, number]>([14.6040, 121.0000]);
 
-  const [trackingData, setTrackingData] = useState({
+  const defaultTrackingData = {
     orderNumber: 'ORD-001',
     status: 'Out for Delivery' as OrderStatus,
     trackingNumber: 'TRK123456789PH',
@@ -53,11 +84,13 @@ export function OrderTracking() {
       { status: 'Out for Delivery', date: 'April 14, 2026 09:00 AM', location: 'In transit to customer', completed: true },
       { status: 'Delivered', date: 'Expected by 5:00 PM', location: 'Awaiting delivery', completed: false }
     ]
-  });
+  };
+
+  const [trackingData, setTrackingData] = useState<typeof defaultTrackingData | null>(defaultTrackingData);
 
   // Simulate GPS movement
   useEffect(() => {
-    if (autoRefresh && trackingData.status === 'Out for Delivery') {
+    if (autoRefresh && trackingData?.status === 'Out for Delivery') {
       intervalRef.current = setInterval(() => {
         setRiderLocation(prev => {
           // Simulate movement toward destination
@@ -72,7 +105,7 @@ export function OrderTracking() {
         if (intervalRef.current) clearInterval(intervalRef.current);
       };
     }
-  }, [autoRefresh, trackingData.status]);
+  }, [autoRefresh, trackingData?.status]);
 
   const getStepIcon = (status: OrderStatus) => {
     switch (status) {
@@ -88,14 +121,61 @@ export function OrderTracking() {
   };
 
   const getCurrentStepIndex = () => {
-    return trackingSteps.indexOf(trackingData.status);
+    return trackingSteps.indexOf(trackingData?.status || 'Order Placed');
   };
 
-  const totalAmount = trackingData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalAmount = trackingData?.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0;
 
   const handleRefresh = () => {
     setLastUpdate(new Date());
     toast.success('Location updated');
+  };
+
+  const handleSearch = () => {
+    const order = userOrders.find((o: any) => o.id === orderNumber || o.id === orderNumber.replace('#', ''));
+    if (order) {
+      loadOrderTracking(order);
+      toast.success('Order found');
+    } else {
+      toast.error('Order not found');
+    }
+  };
+
+  const handleOrderSelect = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    const order = userOrders.find((o: any) => o.id === orderId);
+    if (order) {
+      loadOrderTracking(order);
+    }
+  };
+
+  const loadOrderTracking = (order: any) => {
+    setTrackingData({
+      orderNumber: order.id,
+      status: order.status === 'Processing' ? 'Processing' :
+              order.status === 'Delivered' ? 'Delivered' : 'Out for Delivery',
+      trackingNumber: order.trackingNumber || `TRK${Date.now()}PH`,
+      courier: order.courier || 'J&T Express',
+      riderName: order.riderName || 'Juan Santos',
+      riderContact: order.riderContact || '0917-123-4567',
+      estimatedDelivery: 'Today, 3:00 PM - 5:00 PM',
+      placedDate: new Date(order.date).toLocaleString(),
+      paymentMethod: order.paymentMethod || 'Cash on Delivery',
+      customer: {
+        name: order.customer?.name || localStorage.getItem('userName') || 'Customer',
+        phone: order.customer?.phone || localStorage.getItem('userPhone') || '0917 123 4567',
+        email: order.customer?.email || localStorage.getItem('userEmail') || 'customer@email.com',
+        address: order.shippingAddress || localStorage.getItem('userAddress') || '123 Main Street, Quezon City, Metro Manila'
+      },
+      items: order.items || [],
+      timeline: [
+        { status: 'Order Placed', date: new Date(order.date).toLocaleString(), location: 'Order received', completed: true },
+        { status: 'Processing', date: new Date(Date.now() + 3600000).toLocaleString(), location: 'Package prepared', completed: order.status !== 'Processing' },
+        { status: 'Out for Delivery', date: new Date(Date.now() + 7200000).toLocaleString(), location: 'In transit to customer', completed: order.status === 'Delivered' },
+        { status: 'Delivered', date: order.status === 'Delivered' ? new Date(order.date).toLocaleString() : 'Expected by 5:00 PM', location: 'Awaiting delivery', completed: order.status === 'Delivered' }
+      ]
+    });
+    setOrderNumber(order.id);
   };
 
   // Route line from warehouse to customer
@@ -104,6 +184,35 @@ export function OrderTracking() {
     riderLocation,
     customerLocation
   ];
+
+  // If user has no orders, show "Nothing to Track" message
+  if (!trackingData || userOrders.length === 0) {
+    return (
+      <div className="min-h-screen py-8 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold text-gray-900 mb-2">Track My Order</h1>
+            <p className="text-gray-600">Real-time GPS tracking for your delivery</p>
+          </div>
+
+          {/* Nothing to Track Message */}
+          <Card className="border-gray-200 shadow-sm bg-white">
+            <CardContent className="pt-12 pb-12 text-center">
+              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Nothing to Track</h3>
+              <p className="text-gray-600 mb-6">You don't have any active orders to track. Start shopping to see your orders here!</p>
+              <Link to="/home/catalog">
+                <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+                  Browse Products
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 bg-white">
@@ -117,19 +226,39 @@ export function OrderTracking() {
         {/* Search */}
         <Card className="border-gray-200 shadow-sm bg-white mb-8">
           <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  placeholder="Enter order number (e.g., ORD-001)"
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  className="pl-10 border-gray-300"
-                />
+            <div className="space-y-4">
+              {userOrders.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">Select Your Order</label>
+                  <Select value={selectedOrderId} onValueChange={handleOrderSelect}>
+                    <SelectTrigger className="border-gray-300">
+                      <SelectValue placeholder="Select an order to track" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userOrders.map((order: any) => (
+                        <SelectItem key={order.id} value={order.id}>
+                          Order #{order.id} - {new Date(order.date).toLocaleDateString()} - ₱{(order.total ?? 0).toLocaleString()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    placeholder="Enter order number (e.g., ORD-001)"
+                    value={orderNumber}
+                    onChange={(e) => setOrderNumber(e.target.value)}
+                    className="pl-10 border-gray-300"
+                  />
+                </div>
+                <Button onClick={handleSearch} className="bg-gray-900 hover:bg-gray-800 text-white">
+                  Track Order
+                </Button>
               </div>
-              <Button className="bg-gray-900 hover:bg-gray-800 text-white">
-                Track Order
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -180,12 +309,12 @@ export function OrderTracking() {
                       {
                         position: riderLocation,
                         icon: riderIcon,
-                        popupContent: `<strong>Rider: ${trackingData.riderName}</strong><br />Contact: ${trackingData.riderContact}<br />Currently delivering your order`
+                        popupContent: `<strong>Rider: ${trackingData?.riderName || 'Rider'}</strong><br />Contact: ${trackingData?.riderContact || 'N/A'}<br />Currently delivering your order`
                       },
                       {
                         position: customerLocation,
                         icon: destinationIcon,
-                        popupContent: `<strong>Your Location</strong><br />${trackingData.customer.address}`
+                        popupContent: `<strong>Your Location</strong><br />${trackingData?.customer?.address || 'Your address'}`
                       }
                     ]}
                     polyline={routeLine}
@@ -272,7 +401,7 @@ export function OrderTracking() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {trackingData.timeline.map((event, index) => (
+                  {trackingData?.timeline?.map((event: any, index: number) => (
                     <div key={index} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <div
@@ -280,7 +409,7 @@ export function OrderTracking() {
                             event.completed ? 'bg-gray-900' : 'bg-gray-300'
                           }`}
                         />
-                        {index < trackingData.timeline.length - 1 && (
+                        {index < (trackingData?.timeline?.length || 0) - 1 && (
                           <div
                             className={`w-0.5 h-12 ${
                               event.completed ? 'bg-gray-900' : 'bg-gray-300'
@@ -312,13 +441,13 @@ export function OrderTracking() {
             <Card className="border-gray-200 shadow-sm bg-white">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-gray-900">Order {trackingData.orderNumber}</CardTitle>
+                  <CardTitle className="text-gray-900">Order {trackingData?.orderNumber || 'N/A'}</CardTitle>
                   <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                    {trackingData.status}
+                    {trackingData?.status || 'Unknown'}
                   </Badge>
                 </div>
                 <CardDescription className="text-gray-600 mt-1">
-                  {trackingData.placedDate}
+                  {trackingData?.placedDate || 'Unknown date'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -327,26 +456,26 @@ export function OrderTracking() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tracking Number:</span>
-                      <span className="font-medium text-gray-900">{trackingData.trackingNumber}</span>
+                      <span className="font-medium text-gray-900">{trackingData?.trackingNumber || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Courier:</span>
-                      <span className="font-medium text-gray-900">{trackingData.courier}</span>
+                      <span className="font-medium text-gray-900">{trackingData?.courier || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Rider:</span>
-                      <span className="font-medium text-gray-900">{trackingData.riderName}</span>
+                      <span className="font-medium text-gray-900">{trackingData?.riderName || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Rider Contact:</span>
-                      <span className="font-medium text-gray-900">{trackingData.riderContact}</span>
+                      <span className="font-medium text-gray-900">{trackingData?.riderContact || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-gray-600 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         Estimated:
                       </span>
-                      <span className="font-medium text-blue-600 text-right">{trackingData.estimatedDelivery}</span>
+                      <span className="font-medium text-blue-600 text-right">{trackingData?.estimatedDelivery || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -357,7 +486,7 @@ export function OrderTracking() {
                   <h4 className="font-semibold text-gray-900 mb-3">Delivery Address</h4>
                   <div className="flex items-start gap-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4 text-gray-900 flex-shrink-0 mt-0.5" />
-                    <p>{trackingData.customer.address}</p>
+                    <p>{trackingData?.customer?.address || 'Address not available'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -370,7 +499,7 @@ export function OrderTracking() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {trackingData.items.map((item, index) => (
+                  {trackingData?.items?.map((item: any, index: number) => (
                     <div key={index} className="flex justify-between items-start">
                       <div>
                         <p className="font-medium text-gray-900">{item.name}</p>
@@ -388,7 +517,7 @@ export function OrderTracking() {
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium text-gray-900">{trackingData.paymentMethod}</span>
+                    <span className="font-medium text-gray-900">{trackingData?.paymentMethod || 'N/A'}</span>
                   </div>
                 </div>
               </CardContent>

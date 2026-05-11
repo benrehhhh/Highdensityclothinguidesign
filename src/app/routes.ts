@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import { Dashboard } from "./pages/admin/dashboard";
 import { Inventory } from "./pages/admin/inventory";
 import { Customers } from "./pages/admin/customers";
@@ -23,6 +23,7 @@ import { Notifications } from "./pages/customer/notifications";
 import { Landing } from "./pages/landing";
 import { UnifiedLogin } from "./pages/auth/login";
 import { Register } from "./pages/auth/register";
+import { ForgotPassword } from "./pages/auth/forgot-password";
 import { About } from "./pages/customer/about";
 import { Contact } from "./pages/customer/contact";
 
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     Component: Register,
+  },
+  {
+    path: "/forgot-password",
+    Component: ForgotPassword,
   },
   {
     path: "/home",

@@ -13,14 +13,15 @@ export function AdminSettings() {
   const [activeTab, setActiveTab] = useState('profile');
   const [adminProfileImage, setAdminProfileImage] = useState<string | null>(localStorage.getItem("adminProfileImage"));
 
-  const admin = {
+  const [adminProfile, setAdminProfile] = useState({
     name: 'Admin User',
     email: 'admin@highdensity.com',
     role: 'System Administrator',
     initials: 'AU'
-  };
+  });
 
   const handleSaveProfile = () => {
+    localStorage.setItem('adminProfile', JSON.stringify(adminProfile));
     toast.success('Profile updated successfully');
   };
 
@@ -51,9 +52,9 @@ export function AdminSettings() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="w-20 h-20 bg-gray-900 text-white">
-                  {adminProfileImage ? <img src={adminProfileImage} alt={admin.name} className="w-full h-full object-cover" /> : null}
+                  {adminProfileImage ? <img src={adminProfileImage} alt={adminProfile.name} className="w-full h-full object-cover" /> : null}
                   <AvatarFallback className="bg-gray-900 text-white text-2xl">
-                    {admin.initials}
+                    {adminProfile.initials}
                   </AvatarFallback>
                 </Avatar>
                 <Button
@@ -83,12 +84,12 @@ export function AdminSettings() {
                 />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900">{admin.name}</h3>
-                <p className="text-gray-600">{admin.email}</p>
+                <h3 className="text-xl font-semibold text-gray-900">{adminProfile.name}</h3>
+                <p className="text-gray-600">{adminProfile.email}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Role</p>
-                <p className="font-medium text-gray-900">{admin.role}</p>
+                <p className="font-medium text-gray-900">{adminProfile.role}</p>
               </div>
             </div>
           </CardContent>
@@ -138,7 +139,7 @@ export function AdminSettings() {
 
                 <div className="space-y-2">
                   <Label className="text-gray-900">Email Address</Label>
-                  <Input type="email" defaultValue={admin.email} className="border-gray-200" />
+                  <Input type="email" defaultValue={adminProfile.email} className="border-gray-200" />
                 </div>
 
                 <div className="space-y-2">
@@ -148,7 +149,7 @@ export function AdminSettings() {
 
                 <div className="space-y-2">
                   <Label className="text-gray-900">Role</Label>
-                  <Input value={admin.role} disabled className="border-gray-200 bg-gray-50" />
+                  <Input value={adminProfile.role} disabled className="border-gray-200 bg-gray-50" />
                 </div>
 
                 <Separator className="my-4" />
@@ -350,12 +351,14 @@ export function AdminSettings() {
                   <h3 className="font-medium text-gray-900">Email Preferences</h3>
                   <div className="space-y-2">
                     <Label className="text-gray-900">Notification Email</Label>
-                    <Input
-                      type="email"
-                      defaultValue={admin.email}
-                      className="border-gray-200"
-                      leftIcon={<Mail className="w-4 h-4 text-gray-400" />}
-                    />
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      <Input
+                        type="email"
+                        defaultValue={adminProfile.email}
+                        className="border-gray-200 pl-10"
+                      />
+                    </div>
                     <p className="text-xs text-gray-500">
                       This email will be used for all admin notifications
                     </p>

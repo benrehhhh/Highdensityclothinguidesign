@@ -24,92 +24,15 @@ import {
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Textarea } from '../../components/ui/textarea';
 import { adminApi } from '../../lib/admin-api';
+import { toast } from 'sonner';
 
-const customers = [
-  {
-    id: 1,
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-    phone: '0917 123 4567',
-    address: 'Quezon City, Metro Manila',
-    orders: 8,
-    totalSpent: 12450,
-    tag: 'VIP',
-    joined: '2024-01-15',
-    lastOrder: '2024-03-10',
-    notes: 'Prefers beige and cream colors. Size M.'
-  },
-  {
-    id: 2,
-    name: 'Juan Dela Cruz',
-    email: 'juan.cruz@email.com',
-    phone: '0918 234 5678',
-    address: 'Makati City, Metro Manila',
-    orders: 4,
-    totalSpent: 5980,
-    tag: 'Returning',
-    joined: '2024-02-20',
-    lastOrder: '2024-03-15',
-    notes: 'Likes polo shirts. Usually orders size L.'
-  },
-  {
-    id: 3,
-    name: 'Ana Reyes',
-    email: 'ana.reyes@email.com',
-    phone: '0919 345 6789',
-    address: 'Pasig City, Metro Manila',
-    orders: 1,
-    totalSpent: 1299,
-    tag: 'New',
-    joined: '2024-03-18',
-    lastOrder: '2024-03-18',
-    notes: ''
-  },
-  {
-    id: 4,
-    name: 'Pedro Garcia',
-    email: 'pedro.garcia@email.com',
-    phone: '0920 456 7890',
-    address: 'Taguig City, Metro Manila',
-    orders: 12,
-    totalSpent: 18750,
-    tag: 'VIP',
-    joined: '2023-11-05',
-    lastOrder: '2024-03-12',
-    notes: 'Bulk buyer. Prefers dark colors.'
-  },
-  {
-    id: 5,
-    name: 'Sofia Lim',
-    email: 'sofia.lim@email.com',
-    phone: '0921 567 8901',
-    address: 'Mandaluyong City, Metro Manila',
-    orders: 6,
-    totalSpent: 8940,
-    tag: 'Returning',
-    joined: '2024-01-28',
-    lastOrder: '2024-03-08',
-    notes: 'Prefers cotton material.'
-  },
-  {
-    id: 6,
-    name: 'Carlos Mendoza',
-    email: 'carlos.mendoza@email.com',
-    phone: '0922 678 9012',
-    address: 'Manila City, Metro Manila',
-    orders: 2,
-    totalSpent: 2850,
-    tag: 'New',
-    joined: '2024-03-05',
-    lastOrder: '2024-03-14',
-    notes: ''
-  },
-];
+// Customer data will be loaded from localStorage
 
 export function Customers() {
-  const [customerList, setCustomerList] = useState(customers);
+  const [customerList, setCustomerList] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof customers[0] | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const filteredCustomers = customerList.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,14 +60,28 @@ export function Customers() {
     }
   };
 
-  useEffect(() => {
-    adminApi.getCustomers().then((rows) => {
+  const loadCustomers = async () => {
+    setIsLoading(true);
+    try {
+      const rows = await adminApi.getCustomers();
+      // Map database fields to UI fields
       setCustomerList(rows.map((row: any) => ({
         ...row,
-        totalSpent: row.total_spent,
-        lastOrder: row.last_order
+        totalSpent: row.total_spent || 0,
+        orders: row.orders_count || 0,
+        tag: row.total_spent > 10000 ? 'VIP' : (row.orders_count > 1 ? 'Returning' : 'New'),
+        lastOrder: row.last_order || 'N/A',
+        notes: row.notes || ''
       })));
-    }).catch(() => undefined);
+    } catch (error) {
+      toast.error("Failed to load customers");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
   }, []);
 
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart, Star, Truck, Shield, ArrowLeft, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -24,51 +24,71 @@ const productImages = [
   'https://images.unsplash.com/photo-1619708838487-d18b744f2ea4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYW5kbWFkZSUyMGNsb3RoaW5nJTIwYmFubmVyJTIwaGVyb3xlbnwxfHx8fDE3NzM4ODk4MjN8MA&ixlib=rb-4.1.0&q=80&w=1080'
 ];
 
-const reviews = [
-  {
-    id: 1,
-    name: 'Maria Santos',
-    rating: 5,
-    date: 'March 15, 2024',
-    comment: 'Absolutely love this shirt! The quality is outstanding and it fits perfectly. The fabric is so soft and comfortable.',
-    verified: true
-  },
-  {
-    id: 2,
-    name: 'Juan Dela Cruz',
-    rating: 5,
-    date: 'March 10, 2024',
-    comment: 'Best purchase I\'ve made in a while. The craftsmanship is evident in every detail. Highly recommend!',
-    verified: true
-  },
-  {
-    id: 3,
-    name: 'Ana Reyes',
-    rating: 4,
-    date: 'March 5, 2024',
-    comment: 'Great quality shirt. The color is slightly different from the photo but still beautiful. Very comfortable to wear.',
-    verified: true
-  }
-];
-
 export function ProductDetails() {
   const { id } = useParams();
-  const productId = Number(id);
+  const location = useLocation();
+  const productId = id || '0';
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
   const product = useMemo(() => getProductById(productId), [productId, refreshKey]);
 
   useEffect(() => {
-    initStore().catch(() => undefined);
-    return subscribeStore(() => {
-      setWishlisted(isWishlisted(productId));
-      setRefreshKey((key) => key + 1);
+    // Force refresh products from localStorage when ID changes
+    initStore().then(() => {
+      setRefreshKey(key => key + 1);
+      setIsLoaded(true);
+    }).catch(() => {
+      setIsLoaded(true);
     });
   }, [productId]);
+
+  useEffect(() => {
+    // Check if navigation state has pre-selected values from cart
+    const state = location.state as any;
+    if (state) {
+      if (state.preSelectedSize) setSelectedSize(state.preSelectedSize);
+      if (state.preSelectedColor) setSelectedColor(state.preSelectedColor);
+      if (state.preSelectedQuantity) setQuantity(state.preSelectedQuantity);
+    }
+
+    const unsubscribe = subscribeStore(() => {
+      setWishlisted(isWishlisted(Number(productId)));
+      setRefreshKey((key) => key + 1);
+    });
+
+    // Load reviews from localStorage
+    const loadReviews = () => {
+      const productReviews = JSON.parse(localStorage.getItem('productReviews') || '{}');
+      const productReviewsList = productReviews[productId] || [];
+      setReviews(productReviewsList);
+    };
+
+    loadReviews();
+
+    // Listen for localStorage changes to update reviews in real-time
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'productReviews') {
+        loadReviews();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [productId, location.state]);
+
+  if (!isLoaded) {
+    return <div className="min-h-screen py-8 text-center text-[#8B7355]">Loading...</div>;
+  }
 
   if (!product) {
     return <div className="min-h-screen py-8 text-center text-[#8B7355]">Product not found.</div>;
@@ -178,11 +198,6 @@ export function ProductDetails() {
               <span className="text-4xl font-semibold text-[#B7885E]">
                 ₱{product.price.toLocaleString()}
               </span>
-              {product.originalPrice && (
-                <span className="text-xl text-[#8B7355] line-through">
-                  ₱{product.originalPrice.toLocaleString()}
-                </span>
-              )}
             </div>
 
             {/* Stock Status */}
@@ -342,39 +357,45 @@ export function ProductDetails() {
           </div>
 
           <div className="space-y-6">
-            {reviews.map((review) => (
-              <Card key={review.id} className="border-[#B7885E]/20 shadow-lg">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-[#3B2C24]">{review.name}</p>
-                        {review.verified && (
+            {reviews.length === 0 ? (
+              <Card className="border-[#B7885E]/20 shadow-lg">
+                <CardContent className="pt-6 text-center py-12">
+                  <p className="text-[#8B7355]">No reviews yet. Be the first to review this product!</p>
+                </CardContent>
+              </Card>
+            ) : (
+              reviews.map((review) => (
+                <Card key={review.id} className="border-[#B7885E]/20 shadow-lg">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-[#3B2C24]">{review.userName}</p>
                           <Badge variant="outline" className="border-green-500 text-green-600 text-xs">
                             <Check className="w-3 h-3 mr-1" />
                             Verified Purchase
                           </Badge>
-                        )}
+                        </div>
+                        <p className="text-sm text-[#8B7355]">{new Date(review.date).toLocaleDateString()}</p>
                       </div>
-                      <p className="text-sm text-[#8B7355]">{review.date}</p>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < review.rating
+                                ? 'fill-[#DDB67D] text-[#DDB67D]'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < review.rating
-                              ? 'fill-[#DDB67D] text-[#DDB67D]'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-[#3B2C24] leading-relaxed">{review.comment}</p>
-                </CardContent>
-              </Card>
-            ))}
+                    <p className="text-[#3B2C24] leading-relaxed">{review.commentary}</p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </div>

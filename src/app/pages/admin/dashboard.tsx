@@ -44,11 +44,18 @@ const recentOrders = [
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [summary, setSummary] = useState({
+  const [summary, setSummary] = useState<{
+    ordersToday: number;
+    pendingDeliveries: number;
+    lowStockAlerts: number;
+    monthlySales: number;
+    salesTrend: any[];
+  }>({
     ordersToday: 0,
     pendingDeliveries: 0,
     lowStockAlerts: 0,
-    monthlySales: 0
+    monthlySales: 0,
+    salesTrend: [] as any[]
   });
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -58,8 +65,18 @@ export function Dashboard() {
   });
 
   useEffect(() => {
-    adminApi.getDashboardSummary().then(setSummary).catch(() => undefined);
+    adminApi.getDashboardSummary().then((data) => {
+      setSummary({
+        ordersToday: data.ordersToday,
+        pendingDeliveries: data.pendingDeliveries,
+        lowStockAlerts: data.lowStockAlerts,
+        monthlySales: data.monthlySales,
+        salesTrend: data.salesTrend || []
+      });
+    }).catch(() => undefined);
   }, []);
+
+  const chartData = summary?.salesTrend?.length > 0 ? summary.salesTrend : salesData;
 
   return (
     <div className="p-8 space-y-8 bg-gradient-to-b from-[#f8f5f2] to-white min-h-screen">
@@ -158,7 +175,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={salesData} key="sales-chart">
+              <LineChart data={chartData} key="sales-chart">
                 <CartesianGrid strokeDasharray="3 3" stroke="#B7885E20" key="grid-sales" />
                 <XAxis
                   dataKey="month"
@@ -208,7 +225,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={salesData} key="orders-chart">
+              <BarChart data={chartData} key="orders-chart">
                 <CartesianGrid strokeDasharray="3 3" stroke="#B7885E20" key="grid-orders" />
                 <XAxis
                   dataKey="month"

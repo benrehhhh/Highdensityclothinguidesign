@@ -12,12 +12,27 @@ export function Wishlist() {
   const [wishlistItems, setWishlistItems] = useState(getWishlistProducts());
   useEffect(() => {
     initStore().catch(() => undefined);
-    return subscribeStore(() => setWishlistItems(getWishlistProducts()));
+    setWishlistItems(getWishlistProducts());
+    
+    // Force refresh of wishlist items
+    const refreshWishlist = () => {
+      const items = getWishlistProducts();
+      setWishlistItems(items);
+    };
+    
+    // Refresh on interval to ensure sync
+    const interval = setInterval(refreshWishlist, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleRemove = (id: number, name: string) => {
     toggleWishlist(id).then(() => {
       toast.success(`${name} removed from wishlist`);
+      // Force refresh wishlist items after removal
+      setTimeout(() => {
+        const items = getWishlistProducts();
+        setWishlistItems(items);
+      }, 100);
     });
   };
 
@@ -87,7 +102,7 @@ export function Wishlist() {
                     <X className="w-4 h-4" />
                   </Button>
 
-                  {!item.inStock && (
+                  {!item.inStock && item.inStock !== undefined && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <Badge variant="destructive" className="text-white">Out of Stock</Badge>
                     </div>
@@ -103,14 +118,14 @@ export function Wishlist() {
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xl font-semibold text-[#B7885E]">
-                      ₱{item.price.toLocaleString()}
+                      ₱{(item.price ?? 0).toLocaleString()}
                     </span>
                   </div>
 
                   <div className="flex gap-2">
                     <Button
                       onClick={() => handleAddToCart(item)}
-                      disabled={!item.inStock}
+                      disabled={!item.inStock && item.inStock !== undefined}
                       className="flex-1 bg-[#B7885E] hover:bg-[#9d7350] text-white"
                       size="sm"
                     >
