@@ -50,7 +50,7 @@ export function About() {
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h2 className="mb-4 text-[#3B2C24]">Made in the Philippines</h2>
           <p className="text-[#3B2C24]/80">
-            Based in Manila, Philippines, we work with local artisans and craftspeople to bring you clothing that combines traditional techniques with modern design. Each purchase supports our local community and helps preserve traditional craftsmanship.
+            Based in Liloan, Cebu, Philippines, we work with local artisans and craftspeople to bring you clothing that combines traditional techniques with modern design. Each purchase supports our local community and helps preserve traditional craftsmanship.
           </p>
         </div>
       </div>
